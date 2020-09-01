@@ -1,19 +1,77 @@
 package snortcontroller.main;
 
 
-import net.sourceforge.jpcap.capture.CaptureFileOpenException;
-import net.sourceforge.jpcap.capture.PacketCapture;
+import net.sourceforge.jpcap.capture.*;
+import net.sourceforge.jpcap.net.*;
+import net.sourceforge.jpcap.util.HexHelper;
 
 public class PcapParser {
+	private String pcapFileLocation;
+	
+	private PacketCapture pcap;
+	private PacketHandler phandler;
+	
 	byte[] globalHeader = new byte[24];
 	
 	public PcapParser(String location) {
-		PacketCapture pcap = new PacketCapture();
-		try {
-			pcap.openOffline(location);
-		} catch (CaptureFileOpenException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		pcapFileLocation = location;
+		pcap = new PacketCapture();
+		phandler = new PacketHandler("OFFLINE");
 	}
+	
+	public void parse() throws Exception{
+		pcap.openOffline(pcapFileLocation);
+		pcap.setFilter("", true);
+		pcap.addPacketListener(phandler);
+//		pcap.capture((int) Double.POSITIVE_INFINITY);
+		pcap.capture(4);
+	}
+	
+	
+	class PacketHandler implements PacketListener 
+	{
+	  private int counter = 0;
+
+	  public PacketHandler(String name) {
+	    this.name = name;
+	  }
+
+	  public void packetArrived(Packet packet) {
+	    counter++;
+	    String type = packet.getClass().getName();
+	    System.out.println(name + ": Packet(" + counter + 
+	                       ") is of type " + type + ".");
+	    System.out.println(HexHelper.toString(packet.getHeader()));
+	    System.out.println(HexHelper.toString(packet.getData()));
+	    
+	    if (packet.getClass() == ICMPPacket.class) {
+	    	packet = (ICMPPacket)packet;
+	    	
+	    }
+	    
+	    
+	    
+	  }
+
+	  String name;
+	}
+	
+	class RawPacketHandler implements RawPacketListener 
+	{
+	  private int counter = 0;
+
+	  public RawPacketHandler(String name) {
+	    this.name = name;
+	  }
+
+	  public void rawPacketArrived(RawPacket rawPacket) {
+	    counter++;
+	    System.out.println(name + ": Packet(" + counter + 
+                ") is of type " + rawPacket.getClass().getName() + ".");
+	    System.out.println(rawPacket);
+	  }
+
+	  String name;
+	}
+
 }

@@ -2,6 +2,8 @@ package snortcontroller.main;
 	
 import javafx.application.Application;
 import javafx.stage.Stage;
+import net.sourceforge.jpcap.capture.CaptureFileOpenException;
+import net.sourceforge.jpcap.capture.CapturePacketException;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -29,8 +31,18 @@ public class Main extends Application {
 	}
 	
 	public static void main(String[] args) {
-		PcapParser parse = new PcapParser("/home/kwonkyu/Document/snortlog");
-		
+		PcapParser parse = new PcapParser("/home/kwonkyu/Documents/snortlog");
+		try {
+			parse.parse();
+		} catch (CaptureFileOpenException e) {
+			// TODO Auto-generated catch block
+			System.err.println("Could not open pcap file.");
+		} catch (CapturePacketException e) {
+			System.err.println("Could not capture packets.");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		launch(args);
 	}
 }
