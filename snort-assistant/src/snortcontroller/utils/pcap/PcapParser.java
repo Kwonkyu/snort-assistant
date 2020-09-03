@@ -55,7 +55,7 @@ public class PcapParser {
 	{
 	  private int counter = 0;
 	  private String name;
-	  
+
 	  public PacketHandler(String name) {
 	    this.name = name;
 	  }

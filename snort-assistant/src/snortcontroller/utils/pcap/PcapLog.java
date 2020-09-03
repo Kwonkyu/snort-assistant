@@ -10,6 +10,7 @@ public class PcapLog {
     private int sourcePort;
     private String destinationAddress;
     private String destinationHwAddress;
+    private int destinationPort;
 
     public PcapLog(){
 
@@ -77,5 +78,10 @@ public class PcapLog {
         this.destinationPort = destinationPort;
     }
 
-    private int destinationPort;
+    @Override
+    public String toString() {
+        // return super.toString();
+        return String.format("[PcapLog] %s:%d / %s -> %s:%d / %s",
+                sourceAddress, sourcePort, sourceHwAddress, destinationAddress, destinationPort, destinationHwAddress);
+    }
 }
