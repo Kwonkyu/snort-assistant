@@ -1,2 +1,5 @@
-package snortcontroller.main;public class RuleParserController {
+package snortcontroller.main;
+
+public class RuleParserController {
+
 }

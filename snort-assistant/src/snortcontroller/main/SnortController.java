@@ -1,2 +1,4 @@
-package snortcontroller.main;public class SnortController {
+package snortcontroller.main;
+
+public class SnortController {
 }
