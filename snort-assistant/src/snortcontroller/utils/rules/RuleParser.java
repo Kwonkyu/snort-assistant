@@ -1,4 +1,4 @@
-package snortcontroller.utils;
+package snortcontroller.utils.rules;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
