@@ -1,6 +1,7 @@
 package snortcontroller.test;
 
 import snortcontroller.utils.*;
+import snortcontroller.utils.pcap.PcapParser;
 
 public class Test {
     private PcapParser pcapParser;

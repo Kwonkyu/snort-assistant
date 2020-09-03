@@ -2,15 +2,11 @@ package snortcontroller.main;
 	
 import javafx.application.Application;
 import javafx.stage.Stage;
-import net.sourceforge.jpcap.capture.CaptureFileOpenException;
-import net.sourceforge.jpcap.capture.CapturePacketException;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.fxml.FXMLLoader;
 import snortcontroller.test.Test;
-import snortcontroller.utils.PcapParser;
-import snortcontroller.utils.RuleParser;
 
 
 public class Main extends Application {
