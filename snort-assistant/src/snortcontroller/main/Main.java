@@ -6,12 +6,16 @@ import net.sourceforge.jpcap.capture.CaptureFileOpenException;
 import net.sourceforge.jpcap.capture.CapturePacketException;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.fxml.FXMLLoader;
+import snortcontroller.test.Test;
+import snortcontroller.utils.PcapParser;
+import snortcontroller.utils.RuleParser;
 
 
 public class Main extends Application {
+	private static Test test = new Test();
+
 	@Override
 	public void start(Stage primaryStage) {
 		try {
@@ -31,18 +35,7 @@ public class Main extends Application {
 	}
 	
 	public static void main(String[] args) {
-		PcapParser parse = new PcapParser("/home/kwonkyu/Documents/snortlog");
-		try {
-			parse.parse();
-		} catch (CaptureFileOpenException e) {
-			// TODO Auto-generated catch block
-			System.err.println("Could not open pcap file.");
-		} catch (CapturePacketException e) {
-			System.err.println("Could not capture packets.");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		test.test();
 		launch(args);
 	}
 }

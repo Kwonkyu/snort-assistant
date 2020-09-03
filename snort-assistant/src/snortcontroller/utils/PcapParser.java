@@ -1,4 +1,4 @@
-package snortcontroller.main;
+package snortcontroller.utils;
 
 
 import net.sourceforge.jpcap.capture.*;
@@ -39,14 +39,15 @@ public class PcapParser {
 	  public void packetArrived(Packet packet) {
 	    counter++;
 	    String type = packet.getClass().getName();
-	    System.out.println(name + ": Packet(" + counter + 
-	                       ") is of type " + type + ".");
-	    System.out.println(HexHelper.toString(packet.getHeader()));
-	    System.out.println(HexHelper.toString(packet.getData()));
+//	    System.out.println(name + ": Packet(" + counter + ") is of type " + type + ".");
+//	    System.out.println(HexHelper.toString(packet.getHeader()));
+//	    System.out.println(HexHelper.toString(packet.getData()));
 	    
 	    if (packet.getClass() == ICMPPacket.class) {
-	    	packet = (ICMPPacket)packet;
-	    	
+	    	ICMPPacket icmpPacket = (ICMPPacket)packet;
+	    	System.out.println("From: " + icmpPacket.getSourceAddress() + " / " + icmpPacket.getSourceHwAddress());
+	    	System.out.println("To: " + icmpPacket.getDestinationAddress() + " / " + icmpPacket.getDestinationHwAddress());
+	    	System.out.println(icmpPacket.toColoredVerboseString(true));
 	    }
 	    
 	    
