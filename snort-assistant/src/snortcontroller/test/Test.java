@@ -1,8 +1,8 @@
 package snortcontroller.test;
 
-import snortcontroller.utils.*;
 import snortcontroller.utils.pcap.PcapLog;
 import snortcontroller.utils.pcap.PcapParser;
+import snortcontroller.utils.rules.RuleParser;
 
 import java.util.ArrayList;
 
