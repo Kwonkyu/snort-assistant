@@ -15,7 +15,9 @@ Koreatech CSE 2020 Graduation Project.
 ### Feature 2. Rule Parser.
 - [ ] 룰 읽어서 리스트나 테이블에 표시
 - [ ] 수정, 편집 후 저장 기능
-- 
+- [ ] 환경변수($EXTERNAL_NET)를 읽어서 반영할 수 있도록?
+- [ ] 정규표현식을 활용하여 파싱을 좀 더 편하게 할수도.
+
 ### Feature 3. Snort Controller.
 - [ ] 스노트 관련 설정 조사, 조작기능 추가.
 - [ ] 스노트 켜고 끄기
