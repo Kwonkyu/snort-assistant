@@ -17,6 +17,7 @@ public class Test {
     }
 
     public void test(){
+        /*
         try {
             pcapParser.parse();
             ArrayList<PcapLog> parsedPackets = pcapParser.getParsedPackets();
@@ -32,6 +33,6 @@ public class Test {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // ruleParser.parseBody();
+        */
     }
 }
