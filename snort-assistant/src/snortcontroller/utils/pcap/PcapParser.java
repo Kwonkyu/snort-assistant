@@ -13,16 +13,15 @@ public class PcapParser {
 	private final PacketCapture pcapture;
 	private final PacketHandler phandler;
 	private final RawPacketHandler rphandler;
-
-	private ArrayList<PcapLog> parsedPackets = new ArrayList<>();
+	private final ArrayList<PcapLog> parsedPackets = new ArrayList<>();
 
 	public PcapParser(String location) {
 		pcapFileLocation = location;
 		pcapFile = new File(pcapFileLocation);
 		pcapture = new PacketCapture();
 		// apply default packet handler
-		phandler = new PacketHandler(pcapFile.getName());
-		rphandler = new RawPacketHandler(pcapFile.getName());
+		phandler = new PacketHandler();
+		rphandler = new RawPacketHandler();
 	}
 
 	public void setPcapFileLocation(String location){
@@ -53,41 +52,22 @@ public class PcapParser {
 	
 	class PacketHandler implements PacketListener 
 	{
-	  private int counter = 0;
-	  private String name;
-
-	  public PacketHandler(String name) {
-	    this.name = name;
-	  }
-
 	  public void packetArrived(Packet packet) {
-	    counter++;
-	    String type = packet.getClass().getName();
-	    System.out.printf("(%s) Packet #%d: %s%n%n", this.name, counter, type);
-
 	    if (packet.getClass() == ICMPPacket.class) {
-			PacketInformationPrinter.icmpPacketInfo(packet);
-			parsedPackets.add(new PcapLog(((ICMPPacket) packet).getSourceAddress(), ((ICMPPacket) packet).getSourceHwAddress(),
-					-1, ((ICMPPacket) packet).getDestinationAddress(), ((ICMPPacket) packet).getDestinationHwAddress(), -1));
+			// PacketInformationPrinter.icmpPacketInfo(packet);
+			ICMPPacket icmpPacket = (ICMPPacket)packet;
+			parsedPackets.add(new PcapLog(icmpPacket.getSourceAddress(), icmpPacket.getSourceHwAddress(),-1,
+					icmpPacket.getDestinationAddress(), icmpPacket.getDestinationHwAddress(),-1, packet.getTimeval()));
 	    }
 	    else if(packet.getClass() == ARPPacket.class) {
-			PacketInformationPrinter.arpPacketInfo(packet);
+			// PacketInformationPrinter.arpPacketInfo(packet);
 		}
 	  }
 	}
 	
 	class RawPacketHandler implements RawPacketListener 
 	{
-	  private int counter = 0;
-
-	  public RawPacketHandler(String name) {
-	    this.name = name;
-	  }
-
 	  public void rawPacketArrived(RawPacket rawPacket) {
-	    counter++;
-	    System.out.println(name + ": Packet(" + counter + 
-                ") is of type " + rawPacket.getClass().getName() + ".");
 	    System.out.println(rawPacket);
 	  }
 

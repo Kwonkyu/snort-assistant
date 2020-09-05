@@ -29,7 +29,7 @@
          </HBox.margin>
       </VBox>
       <Separator orientation="VERTICAL" prefHeight="200.0" />
-      <AnchorPane prefHeight="600.0" prefWidth="600.0" HBox.hgrow="SOMETIMES">
+      <AnchorPane prefHeight="900.0" prefWidth="900.0" HBox.hgrow="SOMETIMES">
          <children>
             <BorderPane fx:id="activityFrame" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <top>

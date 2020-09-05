@@ -1,5 +1,7 @@
 package snortcontroller.utils.pcap;
 
+import net.sourceforge.jpcap.util.Timeval;
+
 // This class holds information of each log in pcap.
 public class PcapLog {
     private byte[] header;
@@ -11,6 +13,7 @@ public class PcapLog {
     private String destinationAddress;
     private String destinationHwAddress;
     private int destinationPort;
+    private Timeval timeval;
 
     public PcapLog(){
 
@@ -21,13 +24,16 @@ public class PcapLog {
         this.body = body;
     }
 
-    public PcapLog(String sourceAddress, String sourceHwAddress, int sourcePort, String destinationAddress, String destinationHwAddress, int destinationPort) {
+    public PcapLog(String sourceAddress, String sourceHwAddress, int sourcePort,
+                   String destinationAddress, String destinationHwAddress, int destinationPort,
+                   Timeval timeval) {
         this.sourceAddress = sourceAddress;
         this.sourceHwAddress = sourceHwAddress;
         this.sourcePort = sourcePort;
         this.destinationAddress = destinationAddress;
         this.destinationHwAddress = destinationHwAddress;
         this.destinationPort = destinationPort;
+        this.timeval = timeval;
     }
 
     public String getSourceAddress() {
@@ -77,6 +83,12 @@ public class PcapLog {
     public void setDestinationPort(int destinationPort) {
         this.destinationPort = destinationPort;
     }
+
+    public String getTimeval() {
+        return timeval.getDate().toString();
+    }
+
+    public void setTimeval(Timeval timeval) { this.timeval = timeval; }
 
     @Override
     public String toString() {
