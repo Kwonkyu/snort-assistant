@@ -2,9 +2,11 @@ package snortcontroller.utils.pcap;
 
 import net.sourceforge.jpcap.capture.*;
 import net.sourceforge.jpcap.net.*;
+import net.sourceforge.jpcap.util.Timeval;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class PcapParser {
 	private String pcapFileLocation;
@@ -43,7 +45,6 @@ public class PcapParser {
 		pcapture.addPacketListener(phandler);
 		pcapture.addRawPacketListener(rphandler);
 		pcapture.capture((int) Double.POSITIVE_INFINITY); // throws CapturePacketException
-//		pcap.capture(4);
 	}
 
 	public ArrayList<PcapLog> getParsedPackets(){
@@ -52,26 +53,55 @@ public class PcapParser {
 	
 	class PacketHandler implements PacketListener 
 	{
-	  public void packetArrived(Packet packet) {
-	    if (packet.getClass() == ICMPPacket.class) {
-			// PacketInformationPrinter.icmpPacketInfo(packet);
-			ICMPPacket icmpPacket = (ICMPPacket)packet;
-			parsedPackets.add(new PcapLog(icmpPacket.getSourceAddress(), icmpPacket.getSourceHwAddress(),-1,
-					icmpPacket.getDestinationAddress(), icmpPacket.getDestinationHwAddress(),-1, packet.getTimeval()));
-	    }
-	    else if(packet.getClass() == ARPPacket.class) {
-			// PacketInformationPrinter.arpPacketInfo(packet);
-		}
-	  }
+		public void packetArrived(Packet packet) {
+			Optional<PcapLog> parsedPacket = Optional.empty();
+			if (packet.getClass() == ARPPacket.class) {
+				ARPPacket arpPacket = (ARPPacket)packet;
+				parsedPacket = Optional.of(new PcapLog("-", arpPacket.getSourceHwAddress(), "-",
+						"-", arpPacket.getDestinationHwAddress(), "-", "ARP", packet.getTimeval()));
+			}
+			else if (packet.getClass() == EthernetPacket.class){
+				EthernetPacket ethernetPacket = (EthernetPacket)packet;
+				parsedPacket = Optional.of(new PcapLog("-", ethernetPacket.getSourceHwAddress(), "-", "-",
+						ethernetPacket.getDestinationHwAddress(), "-", "ETHERNET", packet.getTimeval()));
+			}
+			else if (packet.getClass() == ICMPPacket.class) {
+				ICMPPacket icmpPacket = (ICMPPacket)packet;
+				parsedPacket = Optional.of(new PcapLog(icmpPacket.getSourceAddress(), icmpPacket.getSourceHwAddress(),"-",
+						icmpPacket.getDestinationAddress(), icmpPacket.getDestinationHwAddress(),"-", "ICMP", packet.getTimeval()));
+			}
+			else if (packet.getClass() == IGMPPacket.class){
+				IGMPPacket igmpPacket = (IGMPPacket)packet;
+				parsedPacket = Optional.of(new PcapLog(igmpPacket.getSourceAddress(), igmpPacket.getSourceHwAddress(), "-",
+						igmpPacket.getDestinationAddress(), igmpPacket.getDestinationHwAddress(), "-", "IGMP", packet.getTimeval()));
+			}
+			else if (packet.getClass() == IPPacket.class) {
+				IPPacket ipPacket = (IPPacket)packet;
+				parsedPacket = Optional.of(new PcapLog(ipPacket.getSourceAddress(), "-", "-", ipPacket.getDestinationAddress(),
+						"-", "-", "IP", packet.getTimeval()));
+			}
+			else if (packet.getClass() == TCPPacket.class){
+				TCPPacket tcpPacket = (TCPPacket)packet;
+				parsedPacket = Optional.of(new PcapLog(tcpPacket.getSourceAddress(), tcpPacket.getSourceHwAddress(), String.valueOf(tcpPacket.getSourcePort()),
+						tcpPacket.getDestinationAddress(), tcpPacket.getDestinationHwAddress(), String.valueOf(tcpPacket.getDestinationPort()),
+						"TCP",packet.getTimeval()));
+			}
+			else if (packet.getClass() == UDPPacket.class){
+				UDPPacket udpPacket = (UDPPacket)packet;
+				parsedPacket = Optional.of(new PcapLog(udpPacket.getSourceAddress(), udpPacket.getSourceHwAddress(), String.valueOf(udpPacket.getSourcePort()),
+						udpPacket.getDestinationAddress(), udpPacket.getDestinationHwAddress(), String.valueOf(udpPacket.getDestinationPort()),
+						"TCP",packet.getTimeval()));
+			}
+
+			parsedPackets.add(parsedPacket.orElse(new PcapLog("-", "-", "-", "-", "-", "-", "-", new Timeval(0, 0))));
+		  }
 	}
 	
-	class RawPacketHandler implements RawPacketListener 
+	static class RawPacketHandler implements RawPacketListener
 	{
 	  public void rawPacketArrived(RawPacket rawPacket) {
-	    System.out.println(rawPacket);
+	  	// System.out.println(rawPacket);
 	  }
-
-	  String name;
 	}
 
 }

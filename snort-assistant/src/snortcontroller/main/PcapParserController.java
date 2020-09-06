@@ -7,17 +7,15 @@ import javafx.scene.Node;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 import snortcontroller.utils.pcap.PcapLog;
 import snortcontroller.utils.pcap.PcapParser;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class PcapParserController implements Initializable {
     // Toolbar components.
@@ -27,6 +25,8 @@ public class PcapParserController implements Initializable {
     Button findButton;
 	@FXML
     Button openButton;
+	@FXML
+    Button updateChartButton;
 
 	// Main components.
 	@FXML
@@ -44,7 +44,7 @@ public class PcapParserController implements Initializable {
 
     File pcapFile;
     final FileChooser fileChooser = new FileChooser();
-    FileChooser.ExtensionFilter pcapFilter = new FileChooser.ExtensionFilter("libpcap formatted log", "*.pcap");
+    FileChooser.ExtensionFilter pcapFilter = new FileChooser.ExtensionFilter("libpcap formatted log", "*.pcap", "*.pcapng");
 
     PcapParser pcapParser;
     ArrayList<PcapLog> pcapLogs;
@@ -56,10 +56,14 @@ public class PcapParserController implements Initializable {
     TableColumn<PcapLog, String> destinationHwAddressColumn;
     TableColumn<PcapLog, String> destinationPortColumn;
     TableColumn<PcapLog, String> timevalColumn;
+    TableColumn<PcapLog, String> protocolColumn;
     TableColumn<PcapLog, String> payloadColumn;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Show tooltip on text field.
+        pcapFilePathTextField.setTooltip(new Tooltip("The absolute path of pcap log file."));
+
         // 'Find' button to open file chooser window.
         fileChooser.getExtensionFilters().add(pcapFilter);
         findButton.setOnAction(event -> {
@@ -75,6 +79,10 @@ public class PcapParserController implements Initializable {
 
         // 'Open' button to open choosed file.
         openButton.setOnAction(event -> {
+            if (pcapFilePathTextField.getText().isBlank()){
+                System.err.println("Please specify log file's location.");
+                return;
+            }
             pcapParser = new PcapParser(pcapFilePathTextField.getText());
             try {
                 pcapParser.parse();
@@ -83,13 +91,38 @@ public class PcapParserController implements Initializable {
                 System.err.println(e.getLocalizedMessage());
             }
 
-            // TODO: activate table
             pcapLogTableView.setItems(FXCollections.observableArrayList(pcapLogs));
-
-            // TODO: activate chart
+            updateChartButton.fire();
         });
 
-        // TODO: initialize table with table columns
+        updateChartButton.setOnAction(event -> {
+            pcapLogPieChart.getData().clear();
+            Map<String, Integer> counter = new HashMap<>();
+            if(sourceAddressRadioButton.isSelected()){
+                for(PcapLog pcapLog: pcapLogs){
+                    int count = counter.getOrDefault(pcapLog.getSourceAddress(), 0);
+                    counter.put(pcapLog.getSourceAddress(), count + 1);
+                }
+            }
+            else if(packetTypeRadioButton.isSelected()){
+                for(PcapLog pcapLog: pcapLogs){
+                    int count = counter.getOrDefault(pcapLog.getProtocol(), 0);
+                    counter.put(pcapLog.getProtocol(), count + 1);
+                }
+            }
+            else if(dateRadioButton.isSelected()){
+                for(PcapLog pcapLog: pcapLogs){
+                    String time = pcapLog.getTimeval().split("-")[0]; // yyyy/MM/dd-HH:mm:ss
+                    int count = counter.getOrDefault(time, 0);
+                    counter.put(time, count + 1);
+                }
+            }
+            Set<Map.Entry<String, Integer>> entries = counter.entrySet();
+            Stream<Map.Entry<String, Integer>> sortedEntries = entries.stream().sorted(Map.Entry.comparingByValue());
+            sortedEntries.forEach(stringIntegerEntry -> pcapLogPieChart.getData().add(new PieChart.Data(stringIntegerEntry.getKey(), stringIntegerEntry.getValue())));
+
+        });
+
         pcapLogTableView.setEditable(true);
         sourceAddressColumn = new TableColumn<>("Source Address");
         sourceHwAddressColumn = new TableColumn<>("Source MAC Address");
@@ -98,6 +131,7 @@ public class PcapParserController implements Initializable {
         destinationHwAddressColumn = new TableColumn<>("Destination MAC Address");
         destinationPortColumn = new TableColumn<>("Destination Port");
         timevalColumn = new TableColumn<>("Time");
+        protocolColumn = new TableColumn<>("Protocol");
         payloadColumn = new TableColumn<>("Payload");
 
         // column layout settings.
@@ -107,23 +141,24 @@ public class PcapParserController implements Initializable {
         destinationAddressColumn.setMinWidth(175.0);
         destinationHwAddressColumn.setMinWidth(200.0);
         destinationPortColumn.setMinWidth(150.0);
-        timevalColumn.setMinWidth(250.0);
-        payloadColumn.setMinWidth(100.0);
+        timevalColumn.setMinWidth(150.0);
+        protocolColumn.setMinWidth(80.0);
+        payloadColumn.setMinWidth(80.0);
 
         // read values from pcap log.
-        sourceAddressColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("sourceAddress"));
-        sourceHwAddressColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("sourceHwAddress"));
-        sourcePortColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("sourcePort"));
-        destinationAddressColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("destinationAddress"));
-        destinationHwAddressColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("destinationHwAddress"));
-        destinationPortColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("destinationPort"));
-        timevalColumn.setCellValueFactory(new PropertyValueFactory<PcapLog, String>("timeval"));
-
-        Callback<TableColumn<PcapLog, String>, TableCell<PcapLog, String>> buttonCellFactory =
-                new Callback<TableColumn<PcapLog, String>, TableCell<PcapLog, String>>() {
+        sourceAddressColumn.setCellValueFactory(new PropertyValueFactory<>("sourceAddress"));
+        sourceHwAddressColumn.setCellValueFactory(new PropertyValueFactory<>("sourceHwAddress"));
+        sourcePortColumn.setCellValueFactory(new PropertyValueFactory<>("sourcePort"));
+        destinationAddressColumn.setCellValueFactory(new PropertyValueFactory<>("destinationAddress"));
+        destinationHwAddressColumn.setCellValueFactory(new PropertyValueFactory<>("destinationHwAddress"));
+        destinationPortColumn.setCellValueFactory(new PropertyValueFactory<>("destinationPort"));
+        timevalColumn.setCellValueFactory(new PropertyValueFactory<>("timeval"));
+        protocolColumn.setCellValueFactory(new PropertyValueFactory<>("protocol"));
+        payloadColumn.setCellFactory(
+                new Callback<>() {
                     @Override
-                    public TableCell<PcapLog, String> call(final TableColumn<PcapLog, String> param) {
-                        final TableCell<PcapLog, String> cell = new TableCell<PcapLog, String>() {
+                    public TableCell<PcapLog, String> call(TableColumn<PcapLog, String> param) {
+                        return new TableCell<>() {
                             final Button btn = new Button("Payload");
 
                             @Override
@@ -131,24 +166,22 @@ public class PcapParserController implements Initializable {
                                 super.updateItem(item, empty);
                                 if (empty) {
                                     setGraphic(null);
-                                    setText(null);
                                 } else {
                                     btn.setOnAction(event -> {
-                                        System.out.println("TEST PAYLOAD");
+                                        // TODO: show payload of packet.
+                                        System.out.println("PAYLOAD");
                                     });
                                     setGraphic(btn);
-                                    setText(null);
                                 }
+                                setText(null);
                             }
                         };
-                        return cell;
                     }
-                };
-        payloadColumn.setCellFactory(buttonCellFactory);
+                });
 
 
         pcapLogTableView.getColumns().addAll(timevalColumn, sourceAddressColumn, sourceHwAddressColumn, sourcePortColumn,
-                destinationAddressColumn, destinationHwAddressColumn, destinationPortColumn, payloadColumn);
+                destinationAddressColumn, destinationHwAddressColumn, destinationPortColumn, protocolColumn, payloadColumn);
 
         // TODO: radio button handler
     }

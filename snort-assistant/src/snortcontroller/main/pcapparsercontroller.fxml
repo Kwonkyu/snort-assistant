@@ -16,7 +16,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.PcapParserController">
    <center>
-      <VBox alignment="CENTER" BorderPane.alignment="CENTER">
+      <VBox alignment="CENTER" maxHeight="1.7976931348623157E308">
          <children>
             <TableView fx:id="pcapLogTableView" prefHeight="300.0" />
             <SplitPane dividerPositions="0.75">
@@ -36,6 +36,7 @@
                         </RadioButton>
                         <RadioButton fx:id="packetTypeRadioButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Packet Type" toggleGroup="$chartRadioButton" />
                         <RadioButton fx:id="dateRadioButton" layoutX="10.0" layoutY="28.0" mnemonicParsing="false" text="Date" toggleGroup="$chartRadioButton" />
+                        <Button fx:id="updateChartButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Update Chart" />
                      </children>
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
