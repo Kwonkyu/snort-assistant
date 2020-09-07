@@ -92,8 +92,11 @@ public class PcapParser {
 						udpPacket.getDestinationAddress(), udpPacket.getDestinationHwAddress(), String.valueOf(udpPacket.getDestinationPort()),
 						"TCP",packet.getTimeval()));
 			}
-
-			parsedPackets.add(parsedPacket.orElse(new PcapLog("-", "-", "-", "-", "-", "-", "-", new Timeval(0, 0))));
+			if (parsedPacket.isPresent()){
+				parsedPacket.get().setHeader(packet.getHeader());
+				parsedPacket.get().setBody(packet.getData());
+				parsedPackets.add(parsedPacket.get());
+			}
 		  }
 	}
 	
