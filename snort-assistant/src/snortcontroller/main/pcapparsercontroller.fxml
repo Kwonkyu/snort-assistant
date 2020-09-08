@@ -20,6 +20,12 @@
    <center>
       <VBox alignment="CENTER" maxHeight="1.7976931348623157E308">
          <children>
+            <ToolBar fx:id="packetFilteringToolBar">
+              <items>
+                  <Button fx:id="applyFilterButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickApplyFilterButton" text="Apply Filter" />
+                <Button fx:id="clearFilterButton" mnemonicParsing="false" onAction="#onClickClearFilterButton" text="Clear Filter" />
+              </items>
+            </ToolBar>
             <TableView fx:id="pcapLogTableView" prefHeight="300.0" />
             <SplitPane dividerPositions="0.75">
                <items>

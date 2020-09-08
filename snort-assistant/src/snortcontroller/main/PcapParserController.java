@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.PieChart;
@@ -16,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import net.sourceforge.jpcap.util.HexHelper;
 import snortcontroller.utils.pcap.PcapLog;
@@ -40,6 +42,12 @@ public class PcapParserController implements Initializable {
     Button updateChartButton;
 
 	// Main components.
+    @FXML
+    ToolBar packetFilteringToolBar;
+    @FXML
+    Button applyFilterButton;
+    @FXML
+    Button clearFilterButton;
 	@FXML
     TableView<PcapLog> pcapLogTableView;
     @FXML
@@ -63,7 +71,10 @@ public class PcapParserController implements Initializable {
     FileChooser.ExtensionFilter pcapFilter = new FileChooser.ExtensionFilter("libpcap formatted log", "*.pcap", "*.pcapng");
 
     PcapParser pcapParser;
-    ArrayList<PcapLog> pcapLogs;
+    ArrayList<PcapLog> pcapLogs = new ArrayList<>();
+    ArrayList<PcapLog> filteredLogs = new ArrayList<>();
+    // MapProperty<FilterType, ArrayList<String>> logFilters;
+    Map<FilterType, ArrayList<String>> logFilters = new HashMap<>();
 
     TableColumn<PcapLog, String> sourceAddressColumn;
     TableColumn<PcapLog, String> sourceHwAddressColumn;
@@ -76,102 +87,27 @@ public class PcapParserController implements Initializable {
     TableColumn<PcapLog, String> payloadColumn;
 
     Alert readUnavailableAlert = new Alert(Alert.AlertType.INFORMATION,"You're not able to read this file.");
-    Stage dialogWindow = new Stage();
+    Stage payloadWindow = new Stage(StageStyle.DECORATED);
     TextArea headerTextArea, bodyTextArea;
-    ContextMenu menu;
+    ContextMenu cellContextMenu;
 
-    @FXML
-    private void onClickFindButton(ActionEvent event){
-        if (pcapFile != null){ // already opened log file
-            fileChooser.setInitialDirectory(new File(pcapFile.getParent()));
-        }
-        File selectedFile = fileChooser.showOpenDialog(((Node)event.getSource()).getScene().getWindow());
-        if (selectedFile != null){
-            pcapFile = selectedFile;
-            pcapFilePathTextField.setText(pcapFile.getAbsolutePath());
+    enum FilterType { SOURCEADDRESS("srcAddr"), DESTINATIONADDRESS("dstAddr"), PROTOCOL("pt");
+        String name;
+        FilterType(String s) {
+            name = s;
         }
     }
-
-    @FXML
-    private void onClickOpenButton(){
-        if (pcapFilePathTextField.getText().isBlank() || pcapFile == null){
-            System.err.println("Please specify log file's location.");
-            return;
-        }
-
-        if(!pcapFile.canRead()){
-            readUnavailableAlert.show();
-            return;
-        }
-
-        pcapParser = new PcapParser(pcapFilePathTextField.getText());
-
-        try {
-            pcapParser.parse();
-            pcapLogs = pcapParser.getParsedPackets();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        pcapLogTableView.setItems(FXCollections.observableArrayList(pcapLogs));
-        updateChartButton.fire();
-    }
-
-    @FXML
-    private void onClickUpdateChartButton(){
-        pcapLogPieChart.getData().clear();
-        Map<String, Integer> counter = new HashMap<>();
-        if(sourceAddressRadioButton.isSelected()){
-            for(PcapLog pcapLog: pcapLogs){
-                if(pcapLog.getSourceAddress().equals("-")) continue;
-                int count = counter.getOrDefault(pcapLog.getSourceAddress(), 0);
-                counter.put(pcapLog.getSourceAddress(), count + 1);
-            }
-        }
-        else if(packetTypeRadioButton.isSelected()){
-            for(PcapLog pcapLog: pcapLogs){
-                int count = counter.getOrDefault(pcapLog.getProtocol(), 0);
-                counter.put(pcapLog.getProtocol(), count + 1);
-            }
-        }
-        else if(dateRadioButton.isSelected()){
-            for(PcapLog pcapLog: pcapLogs){
-                String time = pcapLog.getTimeval().split("-")[0]; // yyyy/MM/dd-HH:mm:ss
-                int count = counter.getOrDefault(time, 0);
-                counter.put(time, count + 1);
-            }
-        }
-        Set<Map.Entry<String, Integer>> entries = counter.entrySet();
-        Stream<Map.Entry<String, Integer>> sortedEntries = entries.stream().sorted(reverseOrder(Map.Entry.comparingByValue())).limit(chartThresholdSpinner.getValue());
-        sortedEntries.forEach(stringIntegerEntry -> pcapLogPieChart.getData().add(new PieChart.Data(stringIntegerEntry.getKey(), stringIntegerEntry.getValue())));
-    }
-
-    private final EventHandler<ActionEvent> onContextMenuFilter = new EventHandler<ActionEvent>() {
-        @Override
-        public void handle(ActionEvent event) {
-            MenuItem origin = (MenuItem)event.getSource();
-            //TableCell<PcapLog, String> origin = (TableCell<PcapLog, String>) event.getSource(); // MenuItem cannot be casted to TableCell.
-            //PcapLog pcapLog = origin.getTableRow().getItem();
-            //PcapLog pcapLog = (PcapLog)origin.getParentMenu().getUserData();
-            // TODO: why I can't access userdata?
-            PcapLog pcapLog = (PcapLog)menu.getUserData();
-            System.out.println(pcapLog.getSourceAddress() + " is filtered.");
-
-        }
-    };
-
-    private final EventHandler<ActionEvent> onContextMenuBlock = new EventHandler<ActionEvent>() {
-        @Override
-        public void handle(ActionEvent event) {
-
-        }
-    };
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // initial filter list of each type
+        logFilters.putIfAbsent(FilterType.SOURCEADDRESS, new ArrayList<>());
+        logFilters.putIfAbsent(FilterType.DESTINATIONADDRESS, new ArrayList<>());
+        logFilters.putIfAbsent(FilterType.PROTOCOL, new ArrayList<>());
+
         // Popup dialog to show payload
-        dialogWindow.initModality(Modality.NONE);
-        dialogWindow.initOwner(null);
+        payloadWindow.initModality(Modality.NONE);
+        payloadWindow.initOwner(null);
 
         VBox headerContainer = new VBox(10);
         headerTextArea = new TextArea();
@@ -182,8 +118,9 @@ public class PcapParserController implements Initializable {
         bodyContainer.getChildren().addAll(new Label("Body"), bodyTextArea);
 
         VBox dialogContainer = new VBox(20);
+        dialogContainer.setPadding(new Insets(10.0, 10.0, 10.0, 10.0));
         dialogContainer.getChildren().addAll(headerContainer, bodyContainer);
-        dialogWindow.setScene(new Scene(dialogContainer));
+        payloadWindow.setScene(new Scene(dialogContainer));
 
         // Adjust alert windows height to show all texts properly.
         readUnavailableAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
@@ -192,12 +129,12 @@ public class PcapParserController implements Initializable {
         fileChooser.getExtensionFilters().addAll(pcapFilter, anyFilter);
 
         // Context menu for right click on table cell
-        menu = new ContextMenu();
+        cellContextMenu = new ContextMenu();
         MenuItem itemFilter = new MenuItem("Filter");
-        itemFilter.setOnAction(onContextMenuFilter);
+        itemFilter.setOnAction(onClickContextMenuFilter);
         MenuItem itemBlock = new MenuItem("Block");
-        itemBlock.setOnAction(onContextMenuBlock);
-        menu.getItems().addAll(itemFilter, itemBlock);
+        itemBlock.setOnAction(onClickContextMenuBlock);
+        cellContextMenu.getItems().addAll(itemFilter, itemBlock);
 
         pcapLogTableView.setEditable(true);
         sourceAddressColumn = new TableColumn<>("Source Address");
@@ -234,20 +171,122 @@ public class PcapParserController implements Initializable {
 
         // apply context menu factory to columns which has address to block or filter
         sourceAddressColumn.setCellFactory(cellContextMenuFactory);
-        sourceHwAddressColumn.setCellFactory(cellContextMenuFactory);
         destinationAddressColumn.setCellFactory(cellContextMenuFactory);
-        destinationHwAddressColumn.setCellFactory(cellContextMenuFactory);
         protocolColumn.setCellFactory(cellContextMenuFactory);
 
         pcapLogTableView.getColumns().addAll(timevalColumn, sourceAddressColumn, sourceHwAddressColumn, sourcePortColumn,
                 destinationAddressColumn, destinationHwAddressColumn, destinationPortColumn, protocolColumn, payloadColumn);
-
 
         // PieChart threshold spinner initialization.
         chartThresholdSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE));
         chartThresholdSpinner.increment(9); // set initial value to 10.
     }
 
+    private void updatePcapLogTableView(ArrayList<PcapLog> logs){
+        pcapLogTableView.setItems(FXCollections.observableArrayList(logs));
+        pcapLogTableView.refresh();
+    }
+
+    // TODO: filter mode to union or intersection?
+    @FXML
+    private void onClickApplyFilterButton(){
+        ArrayList<String> filteredSourceAddresses = logFilters.get(FilterType.SOURCEADDRESS);
+        ArrayList<String> filteredDestinationAddresses = logFilters.get(FilterType.DESTINATIONADDRESS);
+        ArrayList<String> filteredProtocols = logFilters.get(FilterType.PROTOCOL);
+
+        filteredLogs.clear();
+        for(PcapLog pcapLog: pcapLogs){
+            if (filteredSourceAddresses.contains(pcapLog.getSourceAddress()) ||
+                    filteredDestinationAddresses.contains(pcapLog.getDestinationAddress()) ||
+                    filteredProtocols.contains(pcapLog.getProtocol())){
+                filteredLogs.add(pcapLog);
+            }
+        }
+        updatePcapLogTableView(filteredLogs);
+    }
+
+    @FXML
+    private void onClickClearFilterButton(){
+        ArrayList<Node> deleteNodes = new ArrayList<>();
+        packetFilteringToolBar.getItems().forEach(node -> {
+            if(node instanceof CheckBox){
+                deleteNodes.add(node);
+            }
+        });
+        packetFilteringToolBar.getItems().removeAll(deleteNodes);
+
+        logFilters.get(FilterType.SOURCEADDRESS).clear();
+        logFilters.get(FilterType.DESTINATIONADDRESS).clear();
+        logFilters.get(FilterType.PROTOCOL).clear();
+        updatePcapLogTableView(pcapLogs);
+    }
+
+    @FXML
+    private void onClickFindButton(ActionEvent event){
+        if (pcapFile != null){ // already opened log file
+            fileChooser.setInitialDirectory(new File(pcapFile.getParent()));
+        }
+        File selectedFile = fileChooser.showOpenDialog(((Node)event.getSource()).getScene().getWindow());
+        if (selectedFile != null){
+            pcapFile = selectedFile;
+            pcapFilePathTextField.setText(pcapFile.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void onClickOpenButton(){
+        if (pcapFilePathTextField.getText().isBlank() || pcapFile == null){
+            System.err.println("Please specify log file's location.");
+            return;
+        }
+
+        if(!pcapFile.canRead()){
+            readUnavailableAlert.show();
+            return;
+        }
+
+        pcapParser = new PcapParser(pcapFilePathTextField.getText());
+
+        try {
+            pcapParser.parse();
+            pcapLogs = pcapParser.getParsedPackets();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        pcapLogTableView.setItems(FXCollections.observableArrayList(pcapLogs));
+        statisticsLabel.setText(String.format("Packets: %d", pcapLogs.size()));
+        updateChartButton.fire();
+    }
+
+    @FXML
+    private void onClickUpdateChartButton(){
+        pcapLogPieChart.getData().clear();
+        Map<String, Integer> counter = new HashMap<>();
+        if(sourceAddressRadioButton.isSelected()){
+            for(PcapLog pcapLog: pcapLogs){
+                if(pcapLog.getSourceAddress().equals("-")) continue;
+                int count = counter.getOrDefault(pcapLog.getSourceAddress(), 0);
+                counter.put(pcapLog.getSourceAddress(), count + 1);
+            }
+        }
+        else if(packetTypeRadioButton.isSelected()){
+            for(PcapLog pcapLog: pcapLogs){
+                int count = counter.getOrDefault(pcapLog.getProtocol(), 0);
+                counter.put(pcapLog.getProtocol(), count + 1);
+            }
+        }
+        else if(dateRadioButton.isSelected()){
+            for(PcapLog pcapLog: pcapLogs){
+                String time = pcapLog.getTimeval().split("-")[0]; // yyyy/MM/dd-HH:mm:ss
+                int count = counter.getOrDefault(time, 0);
+                counter.put(time, count + 1);
+            }
+        }
+        Set<Map.Entry<String, Integer>> entries = counter.entrySet();
+        Stream<Map.Entry<String, Integer>> sortedEntries = entries.stream().sorted(reverseOrder(Map.Entry.comparingByValue())).limit(chartThresholdSpinner.getValue());
+        sortedEntries.forEach(stringIntegerEntry -> pcapLogPieChart.getData().add(new PieChart.Data(stringIntegerEntry.getKey(), stringIntegerEntry.getValue())));
+    }
 
     Callback<TableColumn<PcapLog, String>, TableCell<PcapLog, String>> cellPayloadButtonFactory = new Callback<>() {
         @Override
@@ -297,11 +336,8 @@ public class PcapParserController implements Initializable {
 
                             headerTextArea.setText(editedHeaderHexText.toString());
                             bodyTextArea.setText(editedBodyHexText.toString());
-                            dialogWindow.show();
-
-                            //Popup popup = new Popup();
-                            //popup.getContent().add(null);
-                            //popup.show(((Node)event.getSource()).getScene().getWindow());
+                            if(payloadWindow.isShowing()) payloadWindow.close();
+                            payloadWindow.show();
                         });
                         setGraphic(btn);
                     }
@@ -326,12 +362,67 @@ public class PcapParserController implements Initializable {
 
             tableCell.setOnMouseClicked(event -> {
                 if(event.getButton() == MouseButton.SECONDARY){
-                    // TODO: maybe something here to set user data.
-                    menu.setUserData(tableCell.getTableRow().getItem());
-                    menu.show(((Node)event.getSource()).getScene().getWindow(), event.getScreenX(), event.getScreenY());
+                    Map<FilterType, String> data = new HashMap<>();
+                    PcapLog clickedPcapLog = tableCell.getTableRow().getItem();
+                    if(tableCell.getTableColumn() == sourceAddressColumn){
+                        data.put(FilterType.SOURCEADDRESS, clickedPcapLog.getSourceAddress());
+                    }
+                    else if(tableCell.getTableColumn() == destinationAddressColumn){
+                        data.put(FilterType.DESTINATIONADDRESS, clickedPcapLog.getDestinationAddress());
+                    }
+                    else if(tableCell.getTableColumn() == protocolColumn){
+                        data.put(FilterType.PROTOCOL, clickedPcapLog.getProtocol());
+                    }
+                    cellContextMenu.setUserData(data);
+                    cellContextMenu.show(((Node)event.getSource()).getScene().getWindow(), event.getScreenX(), event.getScreenY());
                 }
             });
             return tableCell;
+        }
+    };
+
+    // TODO: multiple filters available.
+    private final EventHandler<ActionEvent> onClickContextMenuFilter = new EventHandler<>() {
+        @Override
+        public void handle(ActionEvent event) {
+            MenuItem origin = (MenuItem) event.getSource();
+            @SuppressWarnings("unchecked") Map<FilterType, String> eventSourceColumn = (HashMap<FilterType, String>) origin.getParentPopup().getUserData();
+            var entries = eventSourceColumn.entrySet();
+            entries.forEach(filterTypeStringEntry -> {
+                FilterType filterType = filterTypeStringEntry.getKey();
+                ArrayList<String> filters = logFilters.get(filterType);
+                String value = filterTypeStringEntry.getValue();
+
+                if(filters.contains(value)){
+                    new Alert(Alert.AlertType.ERROR, "This filter is already applied.").show();
+                    return;
+                }
+                // filters.add(value); it duplicates filter because listener adds too.
+
+                // add visual element(checkbox) in toolbar of tableview which shows what filtering option is set
+                CheckBox newFilter = new CheckBox(String.format("%s: %s", filterType.toString(), value));
+                newFilter.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                    if(newValue){
+                        // if(!filters.contains(value)) filters.add(value);
+                        filters.add(value);
+                    } else {
+                        filters.remove(value);
+                    }
+                });
+                newFilter.setSelected(true);
+                packetFilteringToolBar.getItems().add(newFilter);
+            });
+        }
+    };
+
+    // TODO: implement when filter is done.
+    private final EventHandler<ActionEvent> onClickContextMenuBlock = new EventHandler<ActionEvent>() {
+        @Override
+        public void handle(ActionEvent event) {
+            MenuItem origin = (MenuItem)event.getSource();
+            //PcapLog pcapLog = origin.getTableRow().getItem();
+            PcapLog pcapLog = (PcapLog)origin.getParentPopup().getUserData();
+            System.out.println(pcapLog.getSourceAddress() + " is blocked.");
         }
     };
 }

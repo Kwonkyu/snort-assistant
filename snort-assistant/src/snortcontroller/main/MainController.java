@@ -58,7 +58,8 @@ public class MainController implements Initializable {
             RuleParserBorderPane = FXMLLoader.load(getClass().getResource("ruleparsercontroller.fxml"));
             SnortControllerBorderPane = FXMLLoader.load(getClass().getResource("snortcontroller.fxml"));
         } catch (IOException e) {
-            System.err.println(e.getLocalizedMessage());
+            // System.err.println(e.getLocalizedMessage());
+            e.printStackTrace();
         }
 
     }
