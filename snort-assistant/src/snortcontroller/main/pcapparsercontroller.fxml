@@ -32,7 +32,7 @@
             <SplitPane dividerPositions="0.75">
                <items>
                   <PieChart fx:id="pcapLogPieChart" title="Log Result" />
-                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                  <VBox fx:id="pieChartControllerContainer" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                      <children>
                         <Label text="Sort by...">
                            <font>
@@ -75,6 +75,7 @@
                               <Font name="System Bold" size="13.0" />
                            </font>
                         </Label>
+                        <Label fx:id="statusLabel" layoutX="20.0" layoutY="254.0" text="Status: READY" />
                         <Label fx:id="statisticsLabel" layoutX="20.0" layoutY="254.0" text="Packets: 0" />
                      </children>
                      <padding>

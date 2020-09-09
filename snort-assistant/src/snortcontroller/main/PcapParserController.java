@@ -1,5 +1,6 @@
 package snortcontroller.main;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -27,6 +28,8 @@ import snortcontroller.utils.pcap.PcapParser;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.reverseOrder;
@@ -58,6 +61,8 @@ public class PcapParserController implements Initializable {
 
     // Side components.
     @FXML
+    VBox pieChartControllerContainer;
+    @FXML
     RadioButton sourceAddressRadioButton;
     @FXML
     RadioButton packetTypeRadioButton;
@@ -66,7 +71,11 @@ public class PcapParserController implements Initializable {
     @FXML
     Spinner<Integer> chartThresholdSpinner;
     @FXML
+    Label statusLabel;
+    @FXML
     Label statisticsLabel;
+
+    ExecutorService service = Executors.newSingleThreadExecutor();
 
     File pcapFile;
     final FileChooser fileChooser = new FileChooser();
@@ -204,9 +213,9 @@ public class PcapParserController implements Initializable {
         pcapLogTableView.refresh();
     }
 
-    // TODO: filter mode to union or intersection?
     @FXML
     private void onClickApplyFilterButton(){
+        // TODO: implement non-blocking with disabled elements when filtering logs.
         FilterMode filterMode = filterModeChoiceBox.getValue();
         ArrayList<String> filteredSourceAddresses = logFilters.get(FilterType.SOURCEADDRESS);
         ArrayList<String> filteredDestinationAddresses = logFilters.get(FilterType.DESTINATIONADDRESS);
@@ -281,47 +290,84 @@ public class PcapParserController implements Initializable {
         }
 
         pcapParser = new PcapParser(pcapFilePathTextField.getText());
+        statusLabel.setText("Status: LOADING");
+        openButton.setDisable(true);
+        packetFilteringToolBar.getItems().forEach(node -> node.setDisable(true));
+        pieChartControllerContainer.getChildren().forEach(node -> node.setDisable(true));
 
-        try {
-            pcapParser.parse();
-            pcapLogs = pcapParser.getParsedPackets();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Runnable openFile = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    pcapParser.parse();
+                    pcapLogs = pcapParser.getParsedPackets();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                pcapLogTableView.setItems(FXCollections.observableArrayList(pcapLogs));
+                pcapLogTableView.refresh();
 
-        pcapLogTableView.setItems(FXCollections.observableArrayList(pcapLogs));
-        pcapLogTableView.refresh();
-        statisticsLabel.setText(String.format("Packets: %d", pcapLogs.size()));
-        updateChartButton.fire();
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        statusLabel.setText("Status: DONE");
+                        statisticsLabel.setText(String.format("Packets: %d", pcapLogs.size()));
+                        packetFilteringToolBar.getItems().forEach(node -> node.setDisable(false));
+                        pieChartControllerContainer.getChildren().forEach(node -> node.setDisable(false));
+                        openButton.setDisable(false);
+                        updateChartButton.fire();
+                    }
+                });
+            }
+        };
+        service.submit(openFile);
     }
 
     @FXML
     private void onClickUpdateChartButton(){
         pcapLogPieChart.getData().clear();
         Map<String, Integer> counter = new HashMap<>();
-        if(sourceAddressRadioButton.isSelected()){
-            for(PcapLog pcapLog: pcapLogs){
-                if(pcapLog.getSourceAddress().equals("-")) continue;
-                int count = counter.getOrDefault(pcapLog.getSourceAddress(), 0);
-                counter.put(pcapLog.getSourceAddress(), count + 1);
+
+        // disable every element in container.
+        pieChartControllerContainer.getChildren().forEach(node -> node.setDisable(true));
+
+        Runnable updateChart = new Runnable() {
+            @Override
+            public void run() {
+                if(sourceAddressRadioButton.isSelected()){
+                    for(PcapLog pcapLog: pcapLogs){
+                        if(pcapLog.getSourceAddress().equals("-")) continue;
+                        int count = counter.getOrDefault(pcapLog.getSourceAddress(), 0);
+                        counter.put(pcapLog.getSourceAddress(), count + 1);
+                    }
+                }
+                else if(packetTypeRadioButton.isSelected()){
+                    for(PcapLog pcapLog: pcapLogs){
+                        int count = counter.getOrDefault(pcapLog.getProtocol(), 0);
+                        counter.put(pcapLog.getProtocol(), count + 1);
+                    }
+                }
+                else if(dateRadioButton.isSelected()){
+                    for(PcapLog pcapLog: pcapLogs){
+                        String time = pcapLog.getTimeval().split("-")[0]; // yyyy/MM/dd-HH:mm:ss
+                        int count = counter.getOrDefault(time, 0);
+                        counter.put(time, count + 1);
+                    }
+                }
+
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        pieChartControllerContainer.getChildren().forEach(node -> node.setDisable(false));
+                        Set<Map.Entry<String, Integer>> entries = counter.entrySet();
+                        Stream<Map.Entry<String, Integer>> sortedEntries = entries.stream().sorted(reverseOrder(Map.Entry.comparingByValue())).limit(chartThresholdSpinner.getValue());
+                        sortedEntries.forEach(stringIntegerEntry -> pcapLogPieChart.getData().add(new PieChart.Data(stringIntegerEntry.getKey(), stringIntegerEntry.getValue())));
+                    }
+                });
             }
-        }
-        else if(packetTypeRadioButton.isSelected()){
-            for(PcapLog pcapLog: pcapLogs){
-                int count = counter.getOrDefault(pcapLog.getProtocol(), 0);
-                counter.put(pcapLog.getProtocol(), count + 1);
-            }
-        }
-        else if(dateRadioButton.isSelected()){
-            for(PcapLog pcapLog: pcapLogs){
-                String time = pcapLog.getTimeval().split("-")[0]; // yyyy/MM/dd-HH:mm:ss
-                int count = counter.getOrDefault(time, 0);
-                counter.put(time, count + 1);
-            }
-        }
-        Set<Map.Entry<String, Integer>> entries = counter.entrySet();
-        Stream<Map.Entry<String, Integer>> sortedEntries = entries.stream().sorted(reverseOrder(Map.Entry.comparingByValue())).limit(chartThresholdSpinner.getValue());
-        sortedEntries.forEach(stringIntegerEntry -> pcapLogPieChart.getData().add(new PieChart.Data(stringIntegerEntry.getKey(), stringIntegerEntry.getValue())));
+        };
+
+        service.submit(updateChart);
     }
 
     Callback<TableColumn<PcapLog, String>, TableCell<PcapLog, String>> cellPayloadButtonFactory = new Callback<>() {
