@@ -12,6 +12,7 @@ import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -48,6 +49,8 @@ public class PcapParserController implements Initializable {
     Button applyFilterButton;
     @FXML
     Button clearFilterButton;
+    @FXML
+    ChoiceBox<FilterMode> filterModeChoiceBox;
 	@FXML
     TableView<PcapLog> pcapLogTableView;
     @FXML
@@ -73,6 +76,7 @@ public class PcapParserController implements Initializable {
     PcapParser pcapParser;
     ArrayList<PcapLog> pcapLogs = new ArrayList<>();
     ArrayList<PcapLog> filteredLogs = new ArrayList<>();
+
     // MapProperty<FilterType, ArrayList<String>> logFilters;
     Map<FilterType, ArrayList<String>> logFilters = new HashMap<>();
 
@@ -91,6 +95,11 @@ public class PcapParserController implements Initializable {
     TextArea headerTextArea, bodyTextArea;
     ContextMenu cellContextMenu;
 
+    enum FilterMode { UNION("OR"), INTERSECTION("AND");
+        String name;
+        FilterMode(String s) { name = s; }
+    }
+
     enum FilterType { SOURCEADDRESS("srcAddr"), DESTINATIONADDRESS("dstAddr"), PROTOCOL("pt");
         String name;
         FilterType(String s) {
@@ -100,6 +109,14 @@ public class PcapParserController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // make vbox elements to grow vertically always
+        VBox.setVgrow(pcapLogTableView, Priority.ALWAYS);
+        VBox.setVgrow(pcapLogPieChart, Priority.ALWAYS);
+
+        // initial filtering mode
+        filterModeChoiceBox.getItems().addAll(FilterMode.INTERSECTION, FilterMode.UNION);
+        filterModeChoiceBox.setValue(FilterMode.UNION);
+
         // initial filter list of each type
         logFilters.putIfAbsent(FilterType.SOURCEADDRESS, new ArrayList<>());
         logFilters.putIfAbsent(FilterType.DESTINATIONADDRESS, new ArrayList<>());
@@ -190,16 +207,34 @@ public class PcapParserController implements Initializable {
     // TODO: filter mode to union or intersection?
     @FXML
     private void onClickApplyFilterButton(){
+        FilterMode filterMode = filterModeChoiceBox.getValue();
         ArrayList<String> filteredSourceAddresses = logFilters.get(FilterType.SOURCEADDRESS);
         ArrayList<String> filteredDestinationAddresses = logFilters.get(FilterType.DESTINATIONADDRESS);
         ArrayList<String> filteredProtocols = logFilters.get(FilterType.PROTOCOL);
 
         filteredLogs.clear();
         for(PcapLog pcapLog: pcapLogs){
-            if (filteredSourceAddresses.contains(pcapLog.getSourceAddress()) ||
-                    filteredDestinationAddresses.contains(pcapLog.getDestinationAddress()) ||
-                    filteredProtocols.contains(pcapLog.getProtocol())){
-                filteredLogs.add(pcapLog);
+            if(filterMode == FilterMode.INTERSECTION) {
+                // intersection mode
+                boolean isFiltered = true;
+                if (!filteredSourceAddresses.isEmpty() && !filteredSourceAddresses.contains(pcapLog.getSourceAddress())) {
+                    isFiltered = false;
+                }
+                if (!filteredDestinationAddresses.isEmpty() && !filteredDestinationAddresses.contains(pcapLog.getDestinationAddress())) {
+                    isFiltered = false;
+                }
+                if (!filteredProtocols.isEmpty() && !filteredProtocols.contains(pcapLog.getProtocol())) {
+                    isFiltered = false;
+                }
+                if (isFiltered) filteredLogs.add(pcapLog);
+            }
+            else if(filterMode == FilterMode.UNION) {
+                // union mode
+                if (filteredSourceAddresses.contains(pcapLog.getSourceAddress()) ||
+                        filteredDestinationAddresses.contains(pcapLog.getDestinationAddress()) ||
+                        filteredProtocols.contains(pcapLog.getProtocol())) {
+                    filteredLogs.add(pcapLog);
+                }
             }
         }
         updatePcapLogTableView(filteredLogs);
@@ -255,6 +290,7 @@ public class PcapParserController implements Initializable {
         }
 
         pcapLogTableView.setItems(FXCollections.observableArrayList(pcapLogs));
+        pcapLogTableView.refresh();
         statisticsLabel.setText(String.format("Packets: %d", pcapLogs.size()));
         updateChartButton.fire();
     }
@@ -381,7 +417,6 @@ public class PcapParserController implements Initializable {
         }
     };
 
-    // TODO: multiple filters available.
     private final EventHandler<ActionEvent> onClickContextMenuFilter = new EventHandler<>() {
         @Override
         public void handle(ActionEvent event) {
