@@ -8,6 +8,17 @@ Koreatech CSE 2020 Graduation Project.
 - [ ] 왼쪽 영역에 스노트 상태
 - [ ] 스노트 로그 읽으려면 루트권한 필요
 - [ ] 스노트 실행상태 스레드로 실시간 검사.
+- [ ] 정상적으로 종료가 안되는 것 같은데...?
+```
+primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+    @Override
+    public void handle(WindowEvent t) {
+        Platform.exit();
+        System.exit(0);
+    }
+});
+``` 활용해보기. Runnable 객체를 실행하게되면 정상종료가 안됌.
+
 ### Feature 1. Pcap Log Parser.
 - [X] 로그 읽어서 리스트나 테이블에 표시 및 차트를 활용한 통계 제공.
 - [X] 리스트나 테이블에 표시한 후 버튼을 눌러서 호출하면 차트로 표시.
@@ -33,11 +44,15 @@ Koreatech CSE 2020 Graduation Project.
 - [X] 작업진행중에는 해당 그룹의 노드들 전부 비활성화 및 재활성화.
 
 ### Feature 2. Rule Parser.
-- [ ] 룰 읽어서 리스트나 테이블에 표시
+- [X] 룰 읽어서 리스트나 테이블에 표시
+  - [X] 헤더는 테이블에 표현, 바디는 페이로드때처럼 버튼 컬럼에서 호출하는 것으로 대체
 - [ ] 수정, 편집 후 저장 기능
+  - [ ] 룰 옵션(바디)도 있는 필드만 수정할 수 있는게 아니라 필드를 추가/삭제 가능하도록!
 - [ ] 환경변수($EXTERNAL_NET)를 읽어서 반영할 수 있도록?
+  - [ ] 그러기 위해선 스노트 설정파일을 읽을 수 있어야 할 것. 이런 설정은 기본적으로 스노트 설정 메뉴에서 처리하도록 하자.
 - [ ] 정규표현식을 활용하여 파싱을 좀 더 편하게 할수도.
-- [ ] Accordion 컨테이너 활용?
+- [ ] 여러 룰 파일을 열 수 있는 Accordion 컨테이너 활용?
+- [X] 컨텍스트 메뉴에서 한 행 통째로 삭제하는 기능
 
 ### Feature 3. Snort Controller.
 - [ ] 스노트 관련 설정 조사, 조작기능 추가.

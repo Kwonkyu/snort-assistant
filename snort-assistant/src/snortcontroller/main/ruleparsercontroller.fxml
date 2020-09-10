@@ -10,12 +10,12 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.RuleParserController">
    <top>
-      <ToolBar BorderPane.alignment="CENTER">
+      <ToolBar fx:id="topToolBar" BorderPane.alignment="CENTER">
         <items>
             <Label text=".rules" />
-            <TextField promptText="absolute path here" />
-          <Button mnemonicParsing="false" text="Find" />
-            <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Open" />
+            <TextField fx:id="ruleFilePathTextField" prefWidth="300.0" promptText="absolute path here" />
+          <Button fx:id="findButton" mnemonicParsing="false" onAction="#onClickFindButton" text="Find" />
+            <Button fx:id="openButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickOpenButton" text="Open" />
         </items>
          <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -23,13 +23,20 @@
       </ToolBar>
    </top>
    <center>
-      <TableView prefHeight="300.0" prefWidth="600.0" BorderPane.alignment="CENTER" />
+      <TableView fx:id="ruleTableView" editable="true" prefHeight="300.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy></TableView>
    </center>
    <bottom>
-      <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <ToolBar fx:id="bottomToolBar" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <items>
-          <Button mnemonicParsing="false" text="Save" />
+          <Button fx:id="saveButton" mnemonicParsing="false" onAction="#onClickSaveButton" text="Save" />
+            <Button fx:id="resetButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickResetButton" text="Reset" />
         </items>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
       </ToolBar>
    </bottom>
 </BorderPane>

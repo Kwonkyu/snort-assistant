@@ -12,7 +12,7 @@ public class Rule {
     String ruleDirection; // '->' and '<>'. '<-' doesn't exist.
     String ruleDestinationAddress;
     String ruleDestinationPort;
-    Map<String, String> ruleBodyElements = new HashMap<>();
+    Map<String, String> ruleBodyElements;
 
     public Rule(String ruleAction, String ruleProtocol, String ruleSourceAddress, String ruleSourcePort, String ruleDirection,
                 String ruleDestinationAddress, String ruleDestinationPort, Map<String, String> ruleBodyElements){
@@ -101,5 +101,14 @@ public class Rule {
         return String.format("[ Rule %s ] %s %s packet with src/%s:%s %s dst/%s:%s - %s",
                 this.hashCode(), ruleAction, ruleProtocol, ruleSourceAddress, ruleSourcePort, ruleDirection, ruleDestinationAddress,
                 ruleDestinationPort, ruleBodyString.toString());
+    }
+
+    public Rule copy() {
+        Rule retVal = new Rule(ruleAction, ruleProtocol, ruleSourceAddress, ruleSourcePort, ruleDirection, ruleDestinationAddress,
+                ruleDestinationPort, null);
+        Map<String, String> retValBodyElements = new HashMap<>();
+        ruleBodyElements.forEach(retValBodyElements::put);
+        retVal.setRuleBodyElements(retValBodyElements);
+        return retVal;
     }
 }
