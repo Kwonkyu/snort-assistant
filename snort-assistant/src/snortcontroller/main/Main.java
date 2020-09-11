@@ -8,6 +8,9 @@ import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.fxml.FXMLLoader;
 import snortcontroller.test.Test;
+import snortcontroller.utils.SingleThreadExecutorSingleton;
+
+import java.util.concurrent.TimeUnit;
 
 
 public class Main extends Application {
@@ -24,6 +27,17 @@ public class Main extends Application {
 			Scene scene = new Scene(main);
 			main.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
+			primaryStage.setOnCloseRequest(event -> {
+				var service = SingleThreadExecutorSingleton.getService();
+				service.shutdown();
+				try {
+					service.awaitTermination(10, TimeUnit.SECONDS);
+					service.shutdownNow();
+				} catch (InterruptedException e) {
+					System.err.println("Service shutdown interrupted.");
+					e.printStackTrace();
+				}
+			});
 			primaryStage.show();
 		} catch(Exception e) {
 			e.printStackTrace();

@@ -7,6 +7,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -22,14 +23,17 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
+import snortcontroller.utils.SingleThreadExecutorSingleton;
 import snortcontroller.utils.rules.Rule;
 import snortcontroller.utils.rules.RuleParser;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class RuleParserController implements Initializable {
@@ -59,11 +63,11 @@ public class RuleParserController implements Initializable {
     ArrayList<Rule> rules;
     ArrayList<Rule> editedRules;
 
-    ExecutorService service = Executors.newSingleThreadExecutor();
+    ExecutorService service = SingleThreadExecutorSingleton.getService();
 
     File ruleFile;
     final FileChooser fileChooser = new FileChooser();
-    FileChooser.ExtensionFilter anyFilter = new FileChooser.ExtensionFilter("any file", "*.*");
+    FileChooser.ExtensionFilter anyFilter = new FileChooser.ExtensionFilter("any file", "*");
     FileChooser.ExtensionFilter ruleFilter = new FileChooser.ExtensionFilter("snort rules", "*.rules");
 
     ContextMenu cellContextMenu;
@@ -120,10 +124,8 @@ public class RuleParserController implements Initializable {
             try {
                 ruleParser.parse();
                 rules = ruleParser.getParsedRules();
-                // TODO: optimization?
-                rules.forEach(rule -> {
-                    editedRules.add(rule.copy());
-                });
+                editedRules.clear();
+                rules.forEach(rule -> editedRules.add(rule.copy()));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -139,16 +141,43 @@ public class RuleParserController implements Initializable {
     }
 
     @FXML
-    private void onClickSaveButton(){
-        // TODO: save editedRules
+    private void onClickSaveButton(ActionEvent event){
+        if (ruleFile != null){ // already opened log file
+            fileChooser.setInitialDirectory(new File(ruleFile.getParent()));
+        }
+        // TODO: give window parameter to block events. apply to PcapParser later.
+        Optional<File> selectedFile = Optional.ofNullable(fileChooser.showSaveDialog(((Node)event.getSource()).getScene().getWindow()));
+        if(selectedFile.isPresent()) {
+            try {
+                File writeFile = selectedFile.get();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(writeFile));
+                writer.write(String.format("# This rule file is saved at %s\n", java.time.LocalDateTime.now()));
+                for (Rule rule : editedRules) {
+                    writer.write(String.format("%s %s %s %s %s %s %s (", rule.getRuleAction(), rule.getRuleProtocol(),
+                            rule.getRuleSourceAddress(), rule.getRuleSourcePort(), rule.getRuleDirection(),
+                            rule.getRuleDestinationAddress(), rule.getRuleDestinationPort()));
+                    var bodyElementEntries = rule.getRuleBodyElements().entrySet();
+                    for(var elementEntry: bodyElementEntries){
+                        writer.write(String.format("%s:%s; ", elementEntry.getKey(), elementEntry.getValue()));
+                    }
+                    writer.write(")\n");
+                }
+                writer.close();
+                if(!writeFile.renameTo(new File(String.format("%s.rules", writeFile.getAbsolutePath())))){
+                    showAlert(Alert.AlertType.INFORMATION, "Unable to append extension(.rules) to file");
+                }
+            } catch (IOException e) {
+                showAlert(Alert.AlertType.ERROR, "Unable to write file!");
+            }
+        } else {
+            System.err.println("Unable to create save file");
+        }
     }
 
     @FXML
     private void onClickResetButton(){
         editedRules.clear();
-        rules.forEach(rule -> {
-            editedRules.add(rule.copy());
-        });
+        rules.forEach(rule -> editedRules.add(rule.copy()));
         ruleTableView.setItems(FXCollections.observableArrayList(editedRules));
     }
 
@@ -164,7 +193,6 @@ public class RuleParserController implements Initializable {
         dialogContainer.setPadding(new Insets(10.0, 10.0, 10.0, 10.0));
         dialogContainer.alignmentProperty().set(Pos.CENTER_LEFT);
         optionBodyWindow.setScene(new Scene(new ScrollPane(dialogContainer)));
-        // TODO: edit and save feature to option elements?
 
         // initialize context menu for tableview
         cellContextMenu = new ContextMenu();
@@ -212,14 +240,20 @@ public class RuleParserController implements Initializable {
         destinationPortColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         optionBodyColumn.setCellFactory(cellOptionBodyButtonFactory);
 
+        actionColumn.setOnEditCommit(onActionCellEditCommit);
+        protocolColumn.setOnEditCommit(onProtocolCellEditCommit);
+        sourceAddressColumn.setOnEditCommit(onSourceAddressCellEditCommit);
+        sourcePortColumn.setOnEditCommit(onSourcePortCellEditCommit);
+        directionColumn.setOnEditCommit(onDirectionCellEditCommit);
+        destinationAddressColumn.setOnEditCommit(onDestinationAddressCellEditCommit);
+        destinationPortColumn.setOnEditCommit(onDestinationPortCellEditCommit);
+
         // add columns to table and make it editable.
         ruleTableView.getColumns().addAll(actionColumn, protocolColumn, sourceAddressColumn, sourcePortColumn,
                 directionColumn, destinationAddressColumn, destinationPortColumn, optionBodyColumn);
         // wait, wtf? you don't have to implement cell value factory with context menu! dang it.
         ruleTableView.setContextMenu(cellContextMenu);
-        ruleTableView.itemsProperty().addListener(observable -> {
-            ruleTableView.refresh();
-        });
+        ruleTableView.itemsProperty().addListener(observable -> ruleTableView.refresh());
     }
 
     Callback<TableColumn<Rule, String>, TableCell<Rule, String>> cellOptionBodyButtonFactory = new Callback<>() {
@@ -235,45 +269,95 @@ public class RuleParserController implements Initializable {
                         setGraphic(null);
                     } else {
                         btn.setOnAction(event -> {
+                            // TODO: somewhere around here.. add and delete element button
                             Rule rule = this.getTableRow().getItem();
                             Map<String, String> ruleBodyElements = rule.getRuleBodyElements();
                             dialogContainer.getChildren().clear();
                             ruleBodyElements.forEach((key, value) -> {
                                 Label optionName = new Label(key);
                                 TextField optionValue = new TextField(value);
-                                HBox container = new HBox(optionName, optionValue);
+                                Button removeOption = new Button("-");
+                                HBox container = new HBox(optionName, optionValue, removeOption);
 
                                 optionName.setMinWidth(80.0);
                                 optionValue.setMinWidth(300.0);
                                 HBox.setHgrow(optionName, Priority.ALWAYS);
                                 HBox.setHgrow(optionValue, Priority.ALWAYS);
                                 container.alignmentProperty().set(Pos.CENTER_LEFT);
+                                removeOption.setOnAction(e -> dialogContainer.getChildren().remove(container));
 
                                 dialogContainer.getChildren().add(container);
                             });
+
+                            Button addElementButton = new Button("+");
+                            addElementButton.setOnAction(value -> {
+                                // two text field for option name, value each.
+                                TextField optionName = new TextField();
+                                optionName.setId("OptionName");
+                                TextField optionValue = new TextField();
+                                optionValue.setId("OptionValue");
+                                Button removeOption = new Button("-");
+                                HBox container = new HBox(10, optionName, optionValue, removeOption);
+
+                                optionName.setMinWidth(30.0);
+                                optionValue.setMinWidth(300.0);
+                                HBox.setHgrow(optionName, Priority.ALWAYS);
+                                HBox.setHgrow(optionValue, Priority.ALWAYS);
+                                container.alignmentProperty().set(Pos.CENTER_LEFT);
+                                removeOption.setOnAction(e -> dialogContainer.getChildren().remove(container));
+
+                                int position = -1;
+                                for(var node: dialogContainer.getChildren()){
+                                    if (node instanceof Separator){
+                                        position = dialogContainer.getChildren().lastIndexOf(node);
+                                    }
+                                }
+                                if (position > -1){
+                                    container.setId("AddedElement");
+                                    dialogContainer.getChildren().add(position-1, container);
+                                }
+                            });
+
                             Button saveOptionButton = new Button("Save");
                             saveOptionButton.setOnAction(value -> {
                                 Map<String, String> newRuleBodyElements = new HashMap<>();
                                 dialogContainer.getChildren().forEach(container -> {
                                     Optional<String> optionName = Optional.empty();
                                     Optional<String> optionValue = Optional.empty();
+                                    if(!(container instanceof HBox)) return;
                                     for(Node node: ((HBox)container).getChildren()) {
-                                        if(node instanceof Label) {
-                                            optionName = Optional.of(((Label)node).getText());
-                                        } else if(node instanceof TextField) {
-                                            optionValue = Optional.of(((TextField) node).getText());
+                                        Optional<String> containerID = Optional.ofNullable(container.getId());
+                                        if(containerID.orElse("ExistingElement").equals("AddedElement")){
+                                            // handle conditions when option name and value is empty. ';' should not be written.
+                                            Optional<String> nodeID = Optional.ofNullable(node.getId());
+                                            if(nodeID.orElse("ExistingOptionName").equals("OptionName")){
+                                                optionName = Optional.ofNullable(((TextField)node).getText());
+                                            } else if(nodeID.orElse("ExistingOptionValue").equals("OptionValue")){
+                                                optionValue = Optional.ofNullable(((TextField)node).getText());
+                                            }
+                                        } else {
+                                            if(node instanceof Label) {
+                                                optionName = Optional.of(((Label)node).getText());
+                                            } else if(node instanceof TextField) {
+                                                optionValue = Optional.of(((TextField) node).getText());
+                                            }
                                         }
                                     }
-                                    newRuleBodyElements.put(optionName.orElse("N/A"), optionValue.orElse("N/A"));
+                                    // option name and values from buttons(which are also in hbox container) are empty.
+                                    if(optionName.isPresent() && optionName.get().length() > 0 &&
+                                        optionValue.isPresent() && optionValue.get().length() > 0){
+                                        newRuleBodyElements.put(optionName.get(), optionValue.get());
+                                    }
                                 });
                                 rule.setRuleBodyElements(newRuleBodyElements);
-
-                            });
-                            Button closeButton = new Button("Close");
-                            closeButton.setOnAction(value -> {
                                 ((Stage)((Node)value.getSource()).getScene().getWindow()).close();
                             });
 
+                            Button closeButton = new Button("Close");
+                            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+                            dialogContainer.getChildren().add(new HBox(10, addElementButton));
+                            dialogContainer.getChildren().add(new Separator(Orientation.HORIZONTAL));
                             dialogContainer.getChildren().add(new HBox(10, saveOptionButton, closeButton));
                             optionBodyWindow.show();
                         });
@@ -285,13 +369,47 @@ public class RuleParserController implements Initializable {
         }
     };
 
-    EventHandler<ActionEvent> onClickContextMenuDelete = new EventHandler<ActionEvent>() {
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onActionCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleAction(event.getNewValue());
+    };
+
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onProtocolCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleProtocol(event.getNewValue());
+    };
+
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onSourceAddressCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleSourceAddress(event.getNewValue());
+    };
+
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onSourcePortCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleSourcePort(event.getNewValue());
+    };
+
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onDirectionCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleDirection(event.getNewValue());
+    };
+
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onDestinationAddressCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleDestinationAddress(event.getNewValue());
+    };
+
+    EventHandler<TableColumn.CellEditEvent<Rule, String>> onDestinationPortCellEditCommit = event -> {
+        Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        editedRule.setRuleDestinationPort(event.getNewValue());
+    };
+
+    EventHandler<ActionEvent> onClickContextMenuDelete = new EventHandler<>() {
         @Override
         public void handle(ActionEvent event) {
-            MenuItem origin = (MenuItem) event.getSource();
-            // Rule data = (Rule)origin.getParentPopup().getUserData();
+            // TODO: apply selection model to pcap parser
             Rule data = ruleTableView.getSelectionModel().getSelectedItem();
-            if(showAlert(Alert.AlertType.CONFIRMATION, "Delete this rule?", ButtonType.YES, ButtonType.NO).orElse(ButtonType.OK) == ButtonType.YES){
+            if (showAlert(Alert.AlertType.CONFIRMATION, "Delete this rule?", ButtonType.YES, ButtonType.NO).orElse(ButtonType.OK) == ButtonType.YES) {
                 ruleTableView.getItems().remove(data);
             }
         }

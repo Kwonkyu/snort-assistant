@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import net.sourceforge.jpcap.util.HexHelper;
+import snortcontroller.utils.SingleThreadExecutorSingleton;
 import snortcontroller.utils.pcap.PcapLog;
 import snortcontroller.utils.pcap.PcapParser;
 
@@ -75,7 +76,7 @@ public class PcapParserController implements Initializable {
     @FXML
     Label statisticsLabel;
 
-    ExecutorService service = Executors.newSingleThreadExecutor();
+    ExecutorService service = SingleThreadExecutorSingleton.getService();
 
     File pcapFile;
     final FileChooser fileChooser = new FileChooser();
