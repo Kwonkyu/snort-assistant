@@ -163,8 +163,10 @@ public class RuleParserController implements Initializable {
                     writer.write(")\n");
                 }
                 writer.close();
-                if(!writeFile.renameTo(new File(String.format("%s.rules", writeFile.getAbsolutePath())))){
-                    showAlert(Alert.AlertType.INFORMATION, "Unable to append extension(.rules) to file");
+                if(!writeFile.getName().contains(".rules")){
+                    if(!writeFile.renameTo(new File(String.format("%s.rules", writeFile.getAbsolutePath())))){
+                        showAlert(Alert.AlertType.INFORMATION, "Unable to append extension(.rules) to file");
+                    }
                 }
             } catch (IOException e) {
                 showAlert(Alert.AlertType.ERROR, "Unable to write file!");
@@ -410,7 +412,9 @@ public class RuleParserController implements Initializable {
             // TODO: apply selection model to pcap parser
             Rule data = ruleTableView.getSelectionModel().getSelectedItem();
             if (showAlert(Alert.AlertType.CONFIRMATION, "Delete this rule?", ButtonType.YES, ButtonType.NO).orElse(ButtonType.OK) == ButtonType.YES) {
+                // TODO: maybe i can bind these?
                 ruleTableView.getItems().remove(data);
+                editedRules.remove(data);
             }
         }
     };
