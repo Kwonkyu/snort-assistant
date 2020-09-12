@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.fxml.FXMLLoader;
+import snortcontroller.ScheduledExecutorSingleton;
 import snortcontroller.test.Test;
 import snortcontroller.utils.SingleThreadExecutorSingleton;
 
@@ -25,14 +26,19 @@ public class Main extends Application {
 
 			// rootContainer.getChildren().addAll(mainElement, subElement);
 			Scene scene = new Scene(main);
-			main.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			// main.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			primaryStage.setOnCloseRequest(event -> {
-				var service = SingleThreadExecutorSingleton.getService();
-				service.shutdown();
+				var serviceSingle = SingleThreadExecutorSingleton.getService();
+				var serviceScheduled = ScheduledExecutorSingleton.getService();
+				serviceSingle.shutdown();
+				serviceScheduled.shutdown();
 				try {
-					service.awaitTermination(10, TimeUnit.SECONDS);
-					service.shutdownNow();
+					serviceSingle.awaitTermination(10, TimeUnit.SECONDS);
+					serviceSingle.shutdownNow();
+					serviceScheduled.awaitTermination(10, TimeUnit.SECONDS);
+					serviceScheduled.shutdownNow();
 				} catch (InterruptedException e) {
 					System.err.println("Service shutdown interrupted.");
 					e.printStackTrace();
