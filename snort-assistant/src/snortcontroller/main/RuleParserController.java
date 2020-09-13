@@ -35,6 +35,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static snortcontroller.utils.UserInteractions.*;
 
 public class RuleParserController implements Initializable {
     // top toolbar components
@@ -83,12 +84,6 @@ public class RuleParserController implements Initializable {
 
     Stage optionBodyWindow = new Stage(StageStyle.DECORATED);
     VBox dialogContainer = new VBox(10);
-
-    private Optional<ButtonType> showAlert(Alert.AlertType type, String content, ButtonType... buttons){
-        Alert alert = new Alert(type, content, buttons);
-        alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-        return alert.showAndWait();
-    }
 
     @FXML
     private void onClickFindButton(ActionEvent event){

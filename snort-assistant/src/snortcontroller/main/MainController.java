@@ -8,22 +8,28 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
-import snortcontroller.ScheduledExecutorSingleton;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import snortcontroller.utils.ScheduledExecutorSingleton;
 import snortcontroller.utils.SingleThreadExecutorSingleton;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static snortcontroller.utils.UserInteractions.*;
+
 
 public class MainController implements Initializable {
     @FXML
@@ -37,13 +43,23 @@ public class MainController implements Initializable {
     Label activityLabel;
 
     @FXML
+    Label statusLabel;
+    @FXML
+    HBox statusButtonContainer;
+    @FXML
     Button statusButton;
+    @FXML
+    Label pidLabel;
+
+    @FXML
+    Label rootPrivilegeLabel;
 
     @FXML
     BorderPane activityFrame;
 
     TranslateTransition buttonToggleTransition = new TranslateTransition();
     BooleanProperty statusRunning = new SimpleBooleanProperty(false);
+    boolean isRoot = false;
 
     ExecutorService singleThreadService = SingleThreadExecutorSingleton.getService();
     ScheduledExecutorService scheduledThreadService = ScheduledExecutorSingleton.getService();
@@ -68,64 +84,76 @@ public class MainController implements Initializable {
         statusButton.setText(s);
     }
 
+    private void updateStatusText(String s){
+        statusLabel.setText(s);
+    }
+
+    private void updatePIDText(String s){
+        pidLabel.setText(s);
+    }
+
+    public static String read(InputStream input) throws IOException {
+        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input))) {
+            return buffer.lines().collect(Collectors.joining("\n"));
+        }
+    }
+
+    public static ArrayList<String> readAsList(InputStream input) throws IOException {
+        ArrayList<String> pslist = new ArrayList<>();
+        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input))) {
+            //buffer.lines().collect(Collectors.joining("\n"));
+            buffer.lines().forEach(pslist::add);
+        }
+        return pslist;
+    }
+
     @FXML
-    private void onStatusButtonClicked(ActionEvent event){
-        // TODO: turn off, or on snort. It should not BLOCK events!
+    private void onStatusButtonClicked(){
         statusButton.setDisable(true);
         if(statusRunning.get()){
-            // TODO: try to turn off snort
-            singleThreadService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    if(snortProcess.isPresent()){
-                        Process snort = snortProcess.get();
-                        while(snort.isAlive()){
-                            snort.destroy();
-                        }
-                        System.out.println("Snort terminated.");
-                        snortProcess = Optional.empty();
+            singleThreadService.submit(() -> { // destroy snort process
+                if(snortProcess.isPresent()){
+                    Process snort = snortProcess.get();
+                    while(snort.isAlive()){
+                        // TODO: possible problem when snort cannot be destroyed, it blocks forever.
+                        snort.destroy();
                     }
 
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            statusRunning.setValue(false);
-                            statusButton.setDisable(false);
-                        }
-                    });
+                    snortProcess = Optional.empty();
                 }
+
+                Platform.runLater(() -> {
+                    statusRunning.setValue(false);
+                    statusButton.setDisable(false);
+                });
             });
         } else {
-            // TODO: try to turn on snort
-            singleThreadService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        // TODO: generate command based on snort settings
-                        // first problem: sudo blocks event because it requires password. handle with 'S' option.
-                        Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", "snort"});
-                        Thread.sleep(1000);
-                        if(process.isAlive()){
-                            System.out.println("Snort process started and alive.");
-                            snortProcess = Optional.of(process);
-                        } else {
-                            if(process.exitValue() == 1) {
-                                System.err.println("Snort process not generated.");
+            singleThreadService.submit(() -> { // start snort process
+                try {
+                    // TODO: generate command based on snort settings
+                    // TODO: if user is not root, get password from user?
+                    Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", "snort"});
+                    Thread.sleep(1000);
+                    if(process.isAlive()){
+                        snortProcess = Optional.of(process);
+                    } else {
+                        Platform.runLater(() -> {
+                            if (process.exitValue() == 1) {
+                                //System.err.println("Snort process not generated. Try with root privilege.");
+                                showAlert(Alert.AlertType.ERROR, "Snort process not generated. Try with root privilege.");
                             } else {
-                                System.err.println("Unknown error.");
-                            }
-                        }
-
-                        Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                statusRunning.setValue(snortProcess.isPresent());
-                                statusButton.setDisable(false);
+                                //System.err.println("Snort process not generated. Unknown error.");
+                                showAlert(Alert.AlertType.ERROR, "Snort process not generated. Unknown error.");
                             }
                         });
-                    } catch (IOException | InterruptedException e) {
-                        e.printStackTrace();
                     }
+
+                    Platform.runLater(() -> {
+                        statusRunning.setValue(snortProcess.isPresent());
+                        statusButton.setDisable(false);
+                    });
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
                 }
             });
         }
@@ -145,7 +173,7 @@ public class MainController implements Initializable {
             activityLabel.setText(ruleParserLabel);
         }
         else if(clickedButton == snortSettingButton){
-            activityFrame.setCenter(null);
+            activityFrame.setCenter(SnortControllerBorderPane);
             String snortControllerLabel = "Snort Controller";
             activityLabel.setText(snortControllerLabel);
         }
@@ -157,24 +185,79 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // change listener when running status of snort process is changed.
         statusRunning.addListener((observable, oldValue, newValue) -> {
             if(newValue){
                 updateStatusButtonText("RUNNING");
+                updateStatusText("RUNNING");
             }
             else{
                 updateStatusButtonText("STOPPED");
+                updateStatusText("STOPPED");
             }
             animateToggleButton(statusButton, newValue);
         });
-        
+
+        // check application runner is root or not.
+        try {
+            Process process = Runtime.getRuntime().exec("id -u");
+            isRoot = Integer.parseInt(read(process.getInputStream())) == 0;
+            rootPrivilegeLabel.setText(isRoot ? "root" : "not root");
+            if(!isRoot){
+                showAlert(Alert.AlertType.WARNING, "You're not root. You may not perform some actions which need root privilege.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // check snort process is running every 0.1 seconds.
+        scheduledThreadService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // using 'ps' command to check 'snort' process is running
+                    Process ps = Runtime.getRuntime().exec(new String[]{"bash", "-c", "ps -a | grep snort"});
+                    ArrayList<String> pslist = readAsList(ps.getInputStream());
+                    ArrayList<String> snortPID = new ArrayList<>();
+
+                    // if there is(are) running snort process(es), get PID and save it.
+                    for(String element: pslist){
+                        if(element.contains("snort")){
+                            snortPID.add(element.trim().split(" ")[0]);
+                        }
+                    }
+
+                    Platform.runLater(() -> {
+                        // if one or more snort process is running(or not), set text and snort-running-status properly.
+                        if(snortPID.isEmpty()) {
+                            statusRunning.setValue(false);
+                            updatePIDText("-");
+                            pidLabel.setTooltip(new Tooltip("Snort is not running"));
+                        } else {
+                            statusRunning.setValue(true);
+                            // concat every pid into single string.
+                            Optional<String> snortPIDString = snortPID.stream().reduce((s, s2) -> s.concat(" ").concat(s2));
+                            updatePIDText(snortPIDString.orElse("N/A"));
+                            pidLabel.setTooltip(new Tooltip(String.format("Snort is running at %s", snortPIDString.orElse("N/A"))));
+                            // if snort process is not started by this application, disable toggle button.
+                            // TODO: or just call 'pkill snort'?
+                            if(snortProcess.isEmpty()){
+                                statusButton.setDisable(true);
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 0, 100, TimeUnit.MILLISECONDS);
+
         try {
             PcapParserBorderPane = FXMLLoader.load(getClass().getResource("pcapparsercontroller.fxml"));
             RuleParserBorderPane = FXMLLoader.load(getClass().getResource("ruleparsercontroller.fxml"));
             SnortControllerBorderPane = FXMLLoader.load(getClass().getResource("snortcontroller.fxml"));
         } catch (IOException e) {
-            // System.err.println(e.getLocalizedMessage());
             e.printStackTrace();
         }
-
     }
 }

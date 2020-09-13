@@ -8,10 +8,11 @@ Koreatech CSE 2020 Graduation Project.
 - [X] 스노트 켜고 끄기
   - [ ] 터미널 아웃풋을 읽을 수 있는 윈도우 구현?
 - [X] 왼쪽 영역에 스노트 상태
-- [ ] 스노트 로그 읽으려면 루트권한 필요. 검사 및 알림 루틴 만들기.
-- [ ] 스노트 실행상태 스레드로 실시간 검사.
-  - [ ] 다른 스레드 작업까지 막아버리는거 같은데... ExecutorService에 대해 조사
-- 
+- [X] 스노트 로그 읽으려면 루트권한 필요. 검사 및 알림 루틴 만들기.
+  - [ ] 루트 비밀번호를 받아서 직접 실행시킬 수 있나? 보안 위협이 되진 않을까?
+- [X] 스노트 실행상태 스레드로 실시간 검사.
+- [X] 애플리케이션 외부에서 스노트가 실행됐을 경우 버튼 비활성화
+  - [ ] 아니면 그냥 pkill 명령어로 다 종료시키는 것도? 근데 이건 root일때만 가능하므로..
 
 ### Feature 1. Pcap Log Parser.
 - [X] 로그 읽어서 리스트나 테이블에 표시 및 차트를 활용한 통계 제공.
@@ -19,6 +20,7 @@ Koreatech CSE 2020 Graduation Project.
 - [X] 차트는 패킷의 소스 어드레스, 패킷의 유형, 수신 날짜 빈도수로 정렬하여 파이차트로 표시.
   - [X] 차트에 몇개나 보여줄지 그 리밋을 설정할 수 있는 폼 스피너로 구현.
   - [X] 소스 어드레스가 없는("-") 패킷은 제외하고 계산.
+  - [ ] DatePicker를 이용하여 수신 날짜를 지정하여 정렬할 수 있도록.
 - [X] 기본적인 헤더(src, dst) 말고도 페이로드를 팝업 윈도우로 보여줄 수 있도록
   - [ ] 단순 16진수 나열 말고 무엇을 할 수 있는지?
   - [ ] 여러개의 팝업 윈도우로 여러 페이로드를 비교할 수 있도록?
@@ -53,3 +55,8 @@ Koreatech CSE 2020 Graduation Project.
 ### Feature 3. Snort Controller.
 - [ ] 스노트 관련 설정 조사, 조작기능 추가.
 - [ ] 스노트 configurations 조작할 수 있도록?
+
+## Resources
+Icons made by [itim2101](https://www.flaticon.com/authors/itim2101)
+Icons made by [Kiranshastry](https://www.flaticon.com/free-icon/rules_760172)
+Icons made by [srip](https://www.flaticon.com/authors/srip)

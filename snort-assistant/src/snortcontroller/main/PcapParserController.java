@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.reverseOrder;
+import static snortcontroller.utils.UserInteractions.*;
 
 public class PcapParserController implements Initializable {
     // Toolbar components.
