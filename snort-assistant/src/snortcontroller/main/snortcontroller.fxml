@@ -1,10 +1,149 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.SnortController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.SnortController">
    <center>
-      <Label text="Some Controller Shits Here." BorderPane.alignment="CENTER" />
+      <TabPane>
+         <Tab closable="false" text="Run Command">
+            <BorderPane>
+               <top>
+                  <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
+                    <items>
+                        <Label text="Generated run command" />
+                        <TextField fx:id="generatedCommandTextField" prefWidth="350.0" promptText="snort [options] ..." />
+                        <Button fx:id="runButton" mnemonicParsing="false" text="Run" />
+                        <Button fx:id="saveButton" layoutX="532.0" layoutY="10.0" mnemonicParsing="false" text="Save" />
+                        <Button fx:id="loadButton" layoutX="580.0" layoutY="10.0" mnemonicParsing="false" text="Load" />
+                    </items>
+                  </ToolBar>
+               </top>
+               <center>
+                  <Accordion prefHeight="600.0">
+                    <panes>
+                      <TitledPane animated="false" text="Sniffer mode">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <Button fx:id="snifferModeHelpButton" mnemonicParsing="false" text="What is 'Sniffer' mode?" />
+                                    <HBox>
+                                       <children>
+                                          <CheckBox fx:id="verboseCheckBox" mnemonicParsing="false" text="Verbose(-v)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <CheckBox fx:id="dumpApplicationLayerCheckBox" mnemonicParsing="false" text="Dump application layer(-d)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <CheckBox fx:id="ethernetLayerCheckBox" mnemonicParsing="false" text="Display the second layer info(-e)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <Button fx:id="snifferModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                      <TitledPane animated="false" text="Packet Logger mode">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <Button fx:id="packetLoggerModeHelpButton" mnemonicParsing="false" text="What is 'Packet Logger' mode?" />
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="logToDirectoryCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Log to directory(-l)" />
+                                          <TextField fx:id="logToDirectoryTextField" prefWidth="300.0" promptText="/directory/to/logs" />
+                                          <Button fx:id="logToDirectoryFindButton" mnemonicParsing="false" text="Find" />
+                                          <Button fx:id="logToDirectoryApplyButton" layoutX="630.0" layoutY="10.0" mnemonicParsing="false" text="Apply" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="66.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="homeAddressCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Home address(-h)" />
+                                          <TextField fx:id="homeAddressTextField" prefWidth="300.0" promptText="192.168.1.0/24" />
+                                          <Button fx:id="homeAddressApplyButton" mnemonicParsing="false" text="Apply" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="112.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="tcpdumpFormatCheckBox" mnemonicParsing="false" text="Log packets in tcpdump format/binary mode(-b)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <Button fx:id="packetLoggerModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                        <TitledPane animated="false" layoutX="10.0" layoutY="36.0" text="NIDS mode">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <Button fx:id="NIDSModeHelpButton" mnemonicParsing="false" text="What is 'NIDS' mode?" />
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="configurationFileCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Configuration file location(-c)" />
+                                          <TextField fx:id="configurationFileLocationTextField" prefWidth="250.0" />
+                                          <Button fx:id="configurationFileFindButton" mnemonicParsing="false" text="Find" />
+                                          <Button fx:id="configurationFileApplyButton" mnemonicParsing="false" text="Apply" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="66.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="alertModeCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Alert mode(-A)" />
+                                          <ChoiceBox fx:id="alertModeChoiceBox" prefWidth="250.0" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="112.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="sendAlertToSyslogCheckBox" mnemonicParsing="false" text="Send alert to syslog(-s)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <Button fx:id="NIDSModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                    </panes>
+                  </Accordion>
+               </center></BorderPane>
+         </Tab>
+         <Tab closable="false" text="General Configurations">
+            <BorderPane>
+               <center>
+                  <Accordion BorderPane.alignment="CENTER">
+                    <panes>
+                      <TitledPane animated="false" text="untitled 1" />
+                      <TitledPane animated="false" text="untitled 2" />
+                    </panes>
+                  </Accordion>
+               </center></BorderPane>
+         </Tab>
+      </TabPane>
    </center>
 </BorderPane>

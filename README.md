@@ -38,6 +38,8 @@ Koreatech CSE 2020 Graduation Project.
 - [ ] 컨텍스트 메뉴를 활용해서 해당 ip나 프로토콜을 차단
 - [X] 패킷 로딩 비동기 처리. 얼마나 읽어가는지 프로그레스 표시.
 - [X] 작업진행중에는 해당 그룹의 노드들 전부 비활성화 및 재활성화.
+- [ ] UDP 패킷을 TCP로 잘못 읽는 상황이 발생. 왜이러지? 파서를 다시 확인할것.
+- [ ] FileChooser 초기 디렉토리를 스노트 로그 디렉토리로(존재한다면)
 
 ### Feature 2. Rule Parser.
 - [X] 룰 읽어서 리스트나 테이블에 표시
@@ -51,10 +53,22 @@ Koreatech CSE 2020 Graduation Project.
 - [X] 정규표현식을 활용하여 파싱을 좀 더 편하게 할수도.
 - [ ] 여러 룰 파일을 열 수 있는 Accordion 컨테이너 활용?
 - [X] 컨텍스트 메뉴에서 한 행 통째로 삭제하는 기능
+- [ ] FileChooser 초기 디렉토리를 스노트 룰 디렉토리로(존재한다면)
 
 ### Feature 3. Snort Controller.
 - [ ] 스노트 관련 설정 조사, 조작기능 추가.
-- [ ] 스노트 configurations 조작할 수 있도록?
+- [ ] 스노트 실행 커맨드라인 옵션 조정
+  - [ ] 커맨드라인 옵션에 변화가 일어나면 리스너를 적용해서 자동으로 커맨드 업데이트
+  - [ ] 로그 디렉토리(l 옵션)는 존재하지 않으면 경고 발생시키기
+  - [ ] 바이너리 모드(b 옵션)에서는 verbose, application layer, second layer(data link) 옵션이 무의미하므로 비활성화 시키기.
+  - [ ] NIDS로 동작할 때 verbose 옵션 해제 권장
+  - [ ] 
+- [ ] /etc/snort/snort.conf 읽기
+  - [ ] var HOME_NET 처럼 정의된 변수들 읽기
+    - [ ] any나 특정 ip주소 리스트 파싱
+  - [ ] 전처리기에 대해서 조사해보기. 어떻게 조작하지?
+  - [ ] Snort 출력 모듈(step #6 부분) 설정.
+  - [ ] 규칙 집합 설정
 
 ## Resources
 Icons made by [itim2101](https://www.flaticon.com/authors/itim2101)
