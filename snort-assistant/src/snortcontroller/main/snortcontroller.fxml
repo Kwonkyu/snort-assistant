@@ -23,7 +23,7 @@
                   <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
                     <items>
                         <Label text="Generated run command" />
-                        <TextField fx:id="generatedCommandTextField" prefWidth="350.0" promptText="snort [options] ..." />
+                        <TextField fx:id="generatedCommandTextField" prefWidth="350.0" promptText="snort [options] ..." text="snort" />
                         <Button fx:id="runButton" mnemonicParsing="false" text="Run" />
                         <Button fx:id="saveButton" layoutX="532.0" layoutY="10.0" mnemonicParsing="false" text="Save" />
                         <Button fx:id="loadButton" layoutX="580.0" layoutY="10.0" mnemonicParsing="false" text="Load" />
@@ -33,7 +33,7 @@
                <center>
                   <Accordion prefHeight="600.0">
                     <panes>
-                      <TitledPane animated="false" text="Sniffer mode">
+                      <TitledPane text="Sniffer mode">
                            <content>
                               <VBox spacing="20.0">
                                  <children>
@@ -62,7 +62,7 @@
                               </VBox>
                            </content>
                         </TitledPane>
-                      <TitledPane animated="false" text="Packet Logger mode">
+                      <TitledPane text="Packet Logger mode">
                            <content>
                               <VBox spacing="20.0">
                                  <children>
@@ -96,7 +96,7 @@
                               </VBox>
                            </content>
                         </TitledPane>
-                        <TitledPane animated="false" layoutX="10.0" layoutY="36.0" text="NIDS mode">
+                        <TitledPane layoutX="10.0" layoutY="36.0" text="NIDS mode">
                            <content>
                               <VBox spacing="20.0">
                                  <children>
@@ -123,6 +123,25 @@
                                     <HBox>
                                        <children>
                                           <Button fx:id="NIDSModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                        <TitledPane text="etc">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="interfaceCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Listen on interface(-i)" />
+                                          <ChoiceBox fx:id="interfaceChoiceBox" prefWidth="250.0" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="20.0" spacing="10.0">
+                                       <children>
+                                          <Button fx:id="etcResetButton" mnemonicParsing="false" text="Reset" />
                                        </children>
                                     </HBox>
                                  </children>

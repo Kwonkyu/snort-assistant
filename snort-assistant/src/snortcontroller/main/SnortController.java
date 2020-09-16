@@ -2,28 +2,24 @@ package snortcontroller.main;
 
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.SimpleMapProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.Enumeration;
 import java.util.ResourceBundle;
 
-import static snortcontroller.utils.UserInteractions.*;
+import static snortcontroller.utils.UserInteractions.showAlert;
 
 public class SnortController implements Initializable {
 
@@ -73,7 +69,6 @@ public class SnortController implements Initializable {
     @FXML
     Button packetLoggerModeResetButton;
 
-
     // NIDS mode accordion panel
     @FXML
     Button NIDSModeHelpButton;
@@ -94,6 +89,14 @@ public class SnortController implements Initializable {
     @FXML
     Button NIDSModeResetButton;
 
+    // etc accordion panel
+    @FXML
+    CheckBox interfaceCheckBox;
+    @FXML
+    ChoiceBox<String> interfaceChoiceBox;
+    @FXML
+    Button etcResetButton;
+
     ObservableMap<String, String> selectedOptions = FXCollections.observableHashMap();
     MapProperty<String, String> selectedOptionsProperty = new SimpleMapProperty<>(selectedOptions);
 
@@ -106,14 +109,20 @@ public class SnortController implements Initializable {
         NONE("Turns off alerting."),
         CONSOLE("Sends “fast-style” alerts to the console (screen)."),
         CMG("Generates “cmg style” alerts.");
+
         private final String description;
-        AlertMode(String description) { this.description = description; }
-        public String getDescription(){ return description; }
+        AlertMode(String description) {
+            this.description = description;
+        }
     }
 
+    protected String getSnortRunCommand(){
+        return generatedCommandTextField.getText().length() > 0 ? generatedCommandTextField.getText() : "snort";
+    }
 
-    private File chooseFile(Window window, FileChooser.ExtensionFilter... filters){
+    private File chooseFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
         final FileChooser fileChooser = new FileChooser();
+        if(new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
         fileChooser.getExtensionFilters().clear();
         for (FileChooser.ExtensionFilter filter : filters) fileChooser.setSelectedExtensionFilter(filter);
         return fileChooser.showOpenDialog(window);
@@ -128,33 +137,24 @@ public class SnortController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         // init FXML loader
         mainControllerLoader = new FXMLLoader(getClass().getResource("maincontroller.fxml")).getController();
-        
+
 
         // initialize helper button.
-        snifferModeHelpButton.setOnAction(event -> {
-            showAlert(Alert.AlertType.INFORMATION, "Sniffer mode, which simply reads the packets off of the" +
-                    " network and displays them for you in a continuous stream on the console (screen).");
-        });
-        packetLoggerModeHelpButton.setOnAction(event -> {
-            showAlert(Alert.AlertType.INFORMATION, "Packet Logger mode, which logs the packets to disk.");
-        });
-        NIDSModeHelpButton.setOnAction(event -> {
-            showAlert(Alert.AlertType.INFORMATION, "Network Intrusion Detection System (NIDS) mode, which performs " +
-                    "detection and analysis on network traffic. This is the most complex and configurable mode.");
-        });
+        snifferModeHelpButton.setOnAction(event -> showAlert(Alert.AlertType.INFORMATION, "Sniffer mode, which simply reads the packets off of the" +
+                " network and displays them for you in a continuous stream on the console (screen)."));
+        packetLoggerModeHelpButton.setOnAction(event -> showAlert(Alert.AlertType.INFORMATION, "Packet Logger mode, which logs the packets to disk."));
+        NIDSModeHelpButton.setOnAction(event -> showAlert(Alert.AlertType.INFORMATION, "Network Intrusion Detection System (NIDS) mode, which performs " +
+                "detection and analysis on network traffic. This is the most complex and configurable mode."));
 
         // add listener to options property
         selectedOptionsProperty.addListener((observable, oldValue, newValue) -> {
             StringBuilder command = new StringBuilder("snort ");
-            selectedOptions.forEach((optName, optVal) -> {
-                command.append(String.format("%s %s ", optName, optVal));
-            });
+            selectedOptions.forEach((optName, optVal) -> command.append(String.format("%s %s ", optName, optVal)));
             generatedCommandTextField.setText(command.toString());
         });
 
         // initialize toolbar elements
-        // TODO: if snort process is alive, don't run(duplicated!).
-        runButton.setOnAction(null);
+        // runButton.setOnAction(null); << implemented in MainController.java
         // TODO: save current snort command to shell script(bash?)
         saveButton.setOnAction(null);
         // TODO: load snort command and parse it to check options.
@@ -209,6 +209,9 @@ public class SnortController implements Initializable {
             }
         });
         logToDirectoryApplyButton.setOnAction(event -> {
+            if(!new File(logToDirectoryTextField.getText()).exists()){
+                showAlert(Alert.AlertType.WARNING, "Directory doesn't exist! Snort may not run");
+            }
             selectedOptions.put("-l", logToDirectoryTextField.getText());
         });
 
@@ -223,13 +226,18 @@ public class SnortController implements Initializable {
                 selectedOptions.put("-h", homeAddressTextField.getText());
             }
         });
-        homeAddressApplyButton.setOnAction(event -> {
-            selectedOptions.put("-h", homeAddressTextField.getText());
-        });
+        homeAddressApplyButton.setOnAction(event -> selectedOptions.put("-h", homeAddressTextField.getText()));
 
         tcpdumpFormatCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if(newValue) selectedOptions.put("-b", "");
-            else selectedOptions.remove("-b");
+            if(newValue){
+                selectedOptions.put("-b", "");
+                verboseCheckBox.setSelected(false);
+                dumpApplicationLayerCheckBox.setSelected(false);
+                ethernetLayerCheckBox.setSelected(false);
+            }
+            else{
+                selectedOptions.remove("-b");
+            }
         });
 
         packetLoggerModeResetButton.setOnAction(event -> {
@@ -245,6 +253,11 @@ public class SnortController implements Initializable {
         configurationFileFindButton.disableProperty().bind(configurationFileCheckBox.selectedProperty().not());
         configurationFileApplyButton.disableProperty().bind(configurationFileCheckBox.selectedProperty().not());
 
+        configurationFileCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if(verboseCheckBox.selectedProperty().get() && newValue){
+                showAlert(Alert.AlertType.INFORMATION, "Turning off verbose option(-v) is recommended when NIDS mode.");
+            }
+        });
         configurationFileLocationTextField.disabledProperty().addListener((observable, oldValue, newValue) -> {
             if(newValue){
                 selectedOptions.remove("-c");
@@ -253,15 +266,14 @@ public class SnortController implements Initializable {
             }
         });
         configurationFileFindButton.setOnAction(event -> {
-            File choosedFile = chooseFile(configurationFileFindButton.getScene().getWindow());
+            File choosedFile = chooseFile(configurationFileFindButton.getScene().getWindow(), "/etc/snort/");
+            if(choosedFile == null) return;
             if(choosedFile.exists() && choosedFile.isFile()){
                 configurationFileLocationTextField.setText(choosedFile.getAbsolutePath());
                 configurationFileApplyButton.fire();
             }
         });
-        configurationFileApplyButton.setOnAction(event -> {
-            selectedOptions.put("-c", configurationFileLocationTextField.getText());
-        });
+        configurationFileApplyButton.setOnAction(event -> selectedOptions.put("-c", configurationFileLocationTextField.getText()));
 
         alertModeChoiceBox.disableProperty().bind(alertModeCheckBox.selectedProperty().not());
         alertModeChoiceBox.disabledProperty().addListener((observable, oldValue, newValue) -> {
@@ -269,10 +281,12 @@ public class SnortController implements Initializable {
             else selectedOptions.put("-A", alertModeChoiceBox.getSelectionModel().selectedItemProperty().get().name());
         });
         alertModeChoiceBox.getItems().addAll(AlertMode.values());
-        alertModeChoiceBox.getSelectionModel().select(0);
-        alertModeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+        alertModeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) ->{
+            alertModeChoiceBox.setTooltip(new Tooltip(newValue.description));
             selectedOptions.put("-A", newValue.name());
         });
+        alertModeChoiceBox.getSelectionModel().select(0);
+
 
         sendAlertToSyslogCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             if(newValue) selectedOptions.put("-s", "");
@@ -285,5 +299,26 @@ public class SnortController implements Initializable {
             alertModeCheckBox.setSelected(false);
             sendAlertToSyslogCheckBox.setSelected(false);
         });
+
+        // etc mode option elements.
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            interfaces.asIterator().forEachRemaining(networkInterface -> interfaceChoiceBox.getItems().add(networkInterface.getName()));
+            interfaceChoiceBox.getSelectionModel().select(0);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+
+        interfaceChoiceBox.disableProperty().bind(interfaceCheckBox.selectedProperty().not());
+        interfaceChoiceBox.disabledProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue){
+                selectedOptions.remove("-i");
+            } else {
+                selectedOptions.put("-i", interfaceChoiceBox.getSelectionModel().selectedItemProperty().get());
+            }
+        });
+        interfaceChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectedOptions.put("-i", newValue));
+
+        etcResetButton.setOnAction(event -> interfaceCheckBox.setSelected(false));
     }
 }

@@ -9,10 +9,9 @@ Koreatech CSE 2020 Graduation Project.
   - [ ] 터미널 아웃풋을 읽을 수 있는 윈도우 구현?
 - [X] 왼쪽 영역에 스노트 상태
 - [X] 스노트 로그 읽으려면 루트권한 필요. 검사 및 알림 루틴 만들기.
-  - [ ] 루트 비밀번호를 받아서 직접 실행시킬 수 있나? 보안 위협이 되진 않을까?
 - [X] 스노트 실행상태 스레드로 실시간 검사.
 - [X] 애플리케이션 외부에서 스노트가 실행됐을 경우 버튼 비활성화
-  - [ ] 아니면 그냥 pkill 명령어로 다 종료시키는 것도? 근데 이건 root일때만 가능하므로..
+- [ ] 프로그램 종료 시 스노트 끄고 종료!
 
 ### Feature 1. Pcap Log Parser.
 - [X] 로그 읽어서 리스트나 테이블에 표시 및 차트를 활용한 통계 제공.
@@ -58,17 +57,19 @@ Koreatech CSE 2020 Graduation Project.
 ### Feature 3. Snort Controller.
 - [ ] 스노트 관련 설정 조사, 조작기능 추가.
 - [ ] 스노트 실행 커맨드라인 옵션 조정
-  - [ ] 커맨드라인 옵션에 변화가 일어나면 리스너를 적용해서 자동으로 커맨드 업데이트
-  - [ ] 로그 디렉토리(l 옵션)는 존재하지 않으면 경고 발생시키기
-  - [ ] 바이너리 모드(b 옵션)에서는 verbose, application layer, second layer(data link) 옵션이 무의미하므로 비활성화 시키기.
-  - [ ] NIDS로 동작할 때 verbose 옵션 해제 권장
-  - [ ] 
+  - [X] 커맨드라인 옵션에 변화가 일어나면 리스너를 적용해서 자동으로 커맨드 업데이트
+  - [X] 로그 디렉토리(l 옵션)는 존재하지 않으면 경고 발생시키기
+  - [X] 바이너리 모드(b 옵션)에서는 verbose, application layer, second layer(data link) 옵션이 무의미하므로 비활성화 시키기.
+  - [X] NIDS로 동작할 때 verbose 옵션 해제 권장
 - [ ] /etc/snort/snort.conf 읽기
   - [ ] var HOME_NET 처럼 정의된 변수들 읽기
     - [ ] any나 특정 ip주소 리스트 파싱
   - [ ] 전처리기에 대해서 조사해보기. 어떻게 조작하지?
   - [ ] Snort 출력 모듈(step #6 부분) 설정.
   - [ ] 규칙 집합 설정
+- [X] 스노트 실행중에는 런 옵션 비활성화.
+- [X] 네트워크 인터페이스 파악해서 i 옵션에 추가
+- [X] conf 파일 기본 디렉터리 설정(존재한다면)
 
 ## Resources
 Icons made by [itim2101](https://www.flaticon.com/authors/itim2101)

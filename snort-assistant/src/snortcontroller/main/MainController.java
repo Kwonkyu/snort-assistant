@@ -65,6 +65,12 @@ public class MainController implements Initializable {
     ScheduledExecutorService scheduledThreadService = ScheduledExecutorSingleton.getService();
     Optional<Process> snortProcess = Optional.empty();
 
+    SnortController snortController;
+
+    protected void runSnortToggleButton(){
+
+    }
+
     private void animateToggleButton(Button b, boolean running){
         b.setDisable(true);
         buttonToggleTransition.setNode(statusButton);
@@ -130,9 +136,7 @@ public class MainController implements Initializable {
         } else {
             singleThreadService.submit(() -> { // start snort process
                 try {
-                    // TODO: generate command based on snort settings
-                    // TODO: if user is not root, get password from user?
-                    Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", "snort"});
+                    Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", snortController.getSnortRunCommand()});
                     Thread.sleep(1000);
                     if(process.isAlive()){
                         snortProcess = Optional.of(process);
@@ -152,7 +156,7 @@ public class MainController implements Initializable {
                         statusRunning.setValue(snortProcess.isPresent());
                         statusButton.setDisable(false);
                     });
-                } catch (IOException | InterruptedException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -211,53 +215,66 @@ public class MainController implements Initializable {
         }
 
         // check snort process is running every 0.1 seconds.
-        scheduledThreadService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // using 'ps' command to check 'snort' process is running
-                    Process ps = Runtime.getRuntime().exec(new String[]{"bash", "-c", "ps -a | grep snort"});
-                    ArrayList<String> pslist = readAsList(ps.getInputStream());
-                    ArrayList<String> snortPID = new ArrayList<>();
+        scheduledThreadService.scheduleAtFixedRate(() -> {
+            try {
+                // using 'ps' command to check 'snort' process is running
+                Process ps = Runtime.getRuntime().exec(new String[]{"bash", "-c", "ps -a | grep snort"});
+                ArrayList<String> pslist = readAsList(ps.getInputStream());
+                ArrayList<String> snortPID = new ArrayList<>();
 
-                    // if there is(are) running snort process(es), get PID and save it.
-                    for(String element: pslist){
-                        if(element.contains("snort")){
-                            snortPID.add(element.trim().split(" ")[0]);
+                // if there is(are) running snort process(es), get PID and save it.
+                for(String element: pslist){
+                    if(element.contains("snort")){
+                        snortPID.add(element.trim().split(" ")[0]);
+                    }
+                }
+
+                Platform.runLater(() -> {
+                    // if one or more snort process is running(or not), set text and snort-running-status properly.
+                    if(snortPID.isEmpty()) {
+                        statusRunning.setValue(false);
+                        updatePIDText("-");
+                        pidLabel.setTooltip(new Tooltip("Snort is not running"));
+                    } else {
+                        statusRunning.setValue(true);
+                        // concat every pid into single string.
+                        Optional<String> snortPIDString = snortPID.stream().reduce((s, s2) -> s.concat(" ").concat(s2));
+                        updatePIDText(snortPIDString.orElse("N/A"));
+                        pidLabel.setTooltip(new Tooltip(String.format("Snort is running at %s", snortPIDString.orElse("N/A"))));
+                        // if snort process is not started by this application, disable toggle button.
+                        // TODO: or just call 'pkill snort'?
+                        if(snortProcess.isEmpty()){
+                            statusButton.setDisable(true);
                         }
                     }
-
-                    Platform.runLater(() -> {
-                        // if one or more snort process is running(or not), set text and snort-running-status properly.
-                        if(snortPID.isEmpty()) {
-                            statusRunning.setValue(false);
-                            updatePIDText("-");
-                            pidLabel.setTooltip(new Tooltip("Snort is not running"));
-                        } else {
-                            statusRunning.setValue(true);
-                            // concat every pid into single string.
-                            Optional<String> snortPIDString = snortPID.stream().reduce((s, s2) -> s.concat(" ").concat(s2));
-                            updatePIDText(snortPIDString.orElse("N/A"));
-                            pidLabel.setTooltip(new Tooltip(String.format("Snort is running at %s", snortPIDString.orElse("N/A"))));
-                            // if snort process is not started by this application, disable toggle button.
-                            // TODO: or just call 'pkill snort'?
-                            if(snortProcess.isEmpty()){
-                                statusButton.setDisable(true);
-                            }
-                        }
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
 
         try {
             PcapParserBorderPane = FXMLLoader.load(getClass().getResource("pcapparsercontroller.fxml"));
             RuleParserBorderPane = FXMLLoader.load(getClass().getResource("ruleparsercontroller.fxml"));
-            SnortControllerBorderPane = FXMLLoader.load(getClass().getResource("snortcontroller.fxml"));
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("snortcontroller.fxml"));
+            SnortControllerBorderPane = loader.load();
+            snortController = loader.getController();
+            // works like charm! but why?
+            //SnortControllerBorderPane = FXMLLoader.load(getClass().getResource("snortcontroller.fxml"));
+            //snortController = new FXMLLoader(getClass().getResource("snortcontroller.fxml")).getController();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        snortController.runButton.setOnAction(event -> {
+            if(statusRunning.get()) {
+                showAlert(Alert.AlertType.ERROR, "Snort is already running!");
+            } else {
+                statusButton.fire();
+            }
+        });
+        snortController.runButton.disableProperty().bind(statusButton.disabledProperty());
     }
 }
