@@ -7,6 +7,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToolBar?>
@@ -20,7 +21,7 @@
          <Tab closable="false" text="Run Command">
             <BorderPane>
                <top>
-                  <ToolBar fx:id="toolBar" BorderPane.alignment="CENTER">
+                  <ToolBar fx:id="runCommandToolbar" BorderPane.alignment="CENTER">
                     <items>
                         <Label text="Generated run command" />
                         <TextField fx:id="generatedCommandTextField" prefWidth="350.0" promptText="snort [options] ..." text="snort" />
@@ -154,11 +155,29 @@
          </Tab>
          <Tab closable="false" text="General Configurations">
             <BorderPane>
+               <top>
+                  <ToolBar fx:id="generalConfigurationsToolBar" BorderPane.alignment="CENTER">
+                    <items>
+                        <Label text="Snort configuration file" />
+                        <TextField fx:id="snortConfigurationFileLocationTextField" prefWidth="300.0" promptText="location of snort.conf" text="/etc/snort/snort.conf" />
+                      <Button fx:id="findConfigurationFileButton" mnemonicParsing="false" text="Find" />
+                        <Button fx:id="openConfigurationFileButton" layoutX="314.0" layoutY="11.0" mnemonicParsing="false" text="Open" />
+                    </items>
+                  </ToolBar>
+               </top>
                <center>
                   <Accordion BorderPane.alignment="CENTER">
                     <panes>
-                      <TitledPane animated="false" text="untitled 1" />
-                      <TitledPane animated="false" text="untitled 2" />
+                      <TitledPane text="Network Variables">
+                           <content>
+                              <TableView fx:id="networkVariableTableView" editable="true">
+                                 <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                 </columnResizePolicy>
+                              </TableView>
+                           </content>
+                        </TitledPane>
+                      <TitledPane text="untitled 2" />
                     </panes>
                   </Accordion>
                </center></BorderPane>

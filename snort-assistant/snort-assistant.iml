@@ -10,5 +10,6 @@
     <orderEntry type="jdk" jdkName="JavaSE-11" jdkType="JavaSDK" />
     <orderEntry type="library" name="JavaFX" level="project" />
     <orderEntry type="library" name="jpcap" level="project" />
+    <orderEntry type="library" name="commons-cli" level="project" />
   </component>
 </module>

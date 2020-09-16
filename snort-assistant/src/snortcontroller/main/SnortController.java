@@ -1,31 +1,45 @@
 package snortcontroller.main;
 
+import javafx.application.Platform;
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.SimpleMapProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import org.apache.commons.cli.*;
+import snortcontroller.utils.SingleThreadExecutorSingleton;
+import snortcontroller.utils.configuration.ConfigurationParser;
+import snortcontroller.utils.configuration.NetworkVariable;
+import snortcontroller.utils.configuration.NetworkVariableParser;
 
-import java.io.File;
+import java.io.*;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
 
 import static snortcontroller.utils.UserInteractions.showAlert;
+import static snortcontroller.utils.SingleThreadExecutorSingleton.*;
 
 public class SnortController implements Initializable {
 
+    // variables for 'Run Command' tab
     // Toolbar components
     @FXML
-    ToolBar toolBar;
+    ToolBar runCommandToolbar;
     @FXML
     TextField generatedCommandTextField;
     @FXML
@@ -97,10 +111,30 @@ public class SnortController implements Initializable {
     @FXML
     Button etcResetButton;
 
+
+    // variables for 'General Configurations' tab
+    // toolbar elements
+    @FXML
+    ToolBar generalConfigurationsToolBar;
+    @FXML
+    TextField snortConfigurationFileLocationTextField;
+    @FXML
+    Button findConfigurationFileButton;
+    @FXML
+    Button openConfigurationFileButton;
+    @FXML
+    TableView<NetworkVariable> networkVariableTableView;
+
+
     ObservableMap<String, String> selectedOptions = FXCollections.observableHashMap();
     MapProperty<String, String> selectedOptionsProperty = new SimpleMapProperty<>(selectedOptions);
+    ObservableList<NetworkVariable> parsedNetworkVariables = FXCollections.observableArrayList();
+
+    CommandLineParser parser = null;
+    Options options = null;
 
     MainController mainControllerLoader;
+    ExecutorService service = SingleThreadExecutorSingleton.getService();
 
     enum AlertMode {
         FAST("Fast alert mode. Writes the alert in a simple format with a timestamp, alert message, source and destination IPs/ports."),
@@ -120,9 +154,9 @@ public class SnortController implements Initializable {
         return generatedCommandTextField.getText().length() > 0 ? generatedCommandTextField.getText() : "snort";
     }
 
-    private File chooseFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
+    private File openFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
         final FileChooser fileChooser = new FileChooser();
-        if(new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
+        if(initialDirectory != null && new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
         fileChooser.getExtensionFilters().clear();
         for (FileChooser.ExtensionFilter filter : filters) fileChooser.setSelectedExtensionFilter(filter);
         return fileChooser.showOpenDialog(window);
@@ -133,11 +167,33 @@ public class SnortController implements Initializable {
         return directoryChooser.showDialog(window);
     }
 
+    private File saveFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
+        final FileChooser fileChooser = new FileChooser();
+        if(initialDirectory != null && new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
+        fileChooser.getExtensionFilters().clear();
+        for (FileChooser.ExtensionFilter filter : filters) fileChooser.setSelectedExtensionFilter(filter);
+        return fileChooser.showSaveDialog(window);
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // init FXML loader
         mainControllerLoader = new FXMLLoader(getClass().getResource("maincontroller.fxml")).getController();
 
+        // initialize options
+        parser = new DefaultParser();
+        options = new Options();
+
+        options.addOption(new Option("v", "verbose", false, "be verbose"));
+        options.addOption(new Option("d", "application-layer", false, "dump the application layer"));
+        options.addOption(new Option("e", "ethernet-layer", false, "dump the ethernet layer"));
+        options.addOption(new Option("l", "log-directory", true, "log to directory"));
+        options.addOption(new Option("h", "home-network", true, "set home network"));
+        options.addOption(new Option("b", "binary", false, "log packets in tcpdump format"));
+        options.addOption(new Option("c", "config-file", true, "use rules file"));
+        options.addOption(new Option("A", "alert", true, "set alert mode"));
+        options.addOption(new Option("s", "syslog", false, "send alert to syslog"));
+        options.addOption(new Option("i", "interface", true, "listen on interface"));
 
         // initialize helper button.
         snifferModeHelpButton.setOnAction(event -> showAlert(Alert.AlertType.INFORMATION, "Sniffer mode, which simply reads the packets off of the" +
@@ -155,10 +211,8 @@ public class SnortController implements Initializable {
 
         // initialize toolbar elements
         // runButton.setOnAction(null); << implemented in MainController.java
-        // TODO: save current snort command to shell script(bash?)
-        saveButton.setOnAction(null);
-        // TODO: load snort command and parse it to check options.
-        loadButton.setOnAction(null);
+        saveButton.setOnAction(onClickSaveCommandButton);
+        loadButton.setOnAction(onClickLoadCommandButton);
 
         // initialize sniffer mode option elements.
         verboseCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -266,7 +320,7 @@ public class SnortController implements Initializable {
             }
         });
         configurationFileFindButton.setOnAction(event -> {
-            File choosedFile = chooseFile(configurationFileFindButton.getScene().getWindow(), "/etc/snort/");
+            File choosedFile = openFile(configurationFileFindButton.getScene().getWindow(), "/etc/snort/");
             if(choosedFile == null) return;
             if(choosedFile.exists() && choosedFile.isFile()){
                 configurationFileLocationTextField.setText(choosedFile.getAbsolutePath());
@@ -281,11 +335,11 @@ public class SnortController implements Initializable {
             else selectedOptions.put("-A", alertModeChoiceBox.getSelectionModel().selectedItemProperty().get().name());
         });
         alertModeChoiceBox.getItems().addAll(AlertMode.values());
+        alertModeChoiceBox.getSelectionModel().select(0);
         alertModeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) ->{
             alertModeChoiceBox.setTooltip(new Tooltip(newValue.description));
             selectedOptions.put("-A", newValue.name());
         });
-        alertModeChoiceBox.getSelectionModel().select(0);
 
 
         sendAlertToSyslogCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -320,5 +374,194 @@ public class SnortController implements Initializable {
         interfaceChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectedOptions.put("-i", newValue));
 
         etcResetButton.setOnAction(event -> interfaceCheckBox.setSelected(false));
+
+
+        // TODO: general configuration setting page
+        // network variables
+        TableColumn<NetworkVariable, String> variableTypeTableColumn = new TableColumn<>("Type");
+        TableColumn<NetworkVariable, String> variableNameTableColumn = new TableColumn<>("Name");
+        TableColumn<NetworkVariable, String> variableValueTableColumn = new TableColumn<>("Value");
+
+        variableTypeTableColumn.setMinWidth(100.0);
+        variableNameTableColumn.setMinWidth(100.0);
+        variableValueTableColumn.setMinWidth(250.0);
+
+        variableTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+        variableNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        variableValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+        variableTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        variableNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        variableValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        variableTypeTableColumn.setOnEditCommit(onEditCommitTypeColumn);
+        variableNameTableColumn.setOnEditCommit(onEditCommitNameColumn);
+        variableValueTableColumn.setOnEditCommit(onEditCommitValueColumn);
+
+        networkVariableTableView.setEditable(true);
+        networkVariableTableView.getColumns().addAll(variableTypeTableColumn, variableNameTableColumn, variableValueTableColumn);
+
+        findConfigurationFileButton.setOnAction(onClickFindConfigurationFileButton);
+        findConfigurationFileButton.setOnAction(onClickOpenConfigurationFileButton);
     }
+
+    private final EventHandler<ActionEvent> onClickSaveCommandButton = new EventHandler<>() {
+        @Override
+        public void handle(ActionEvent event) {
+            File saveFile = saveFile(saveButton.getScene().getWindow(), null);
+            if (saveFile != null) {
+                try {
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(saveFile));
+                    bw.write("#!/bin/bash\n");
+                    bw.write(String.format("# This script is generated by SnortController in %s\n", java.time.LocalDateTime.now()));
+                    bw.write(generatedCommandTextField.getText());
+                    bw.write("\n");
+                    bw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (!saveFile.getName().endsWith(".sh")) {
+                    if (!saveFile.renameTo(new File(String.format("%s.sh", saveFile.getAbsolutePath())))) {
+                        showAlert(Alert.AlertType.WARNING, "Unable to append extension(*.sh) to file.");
+                    }
+                }
+            }
+        }
+    };
+
+    private final EventHandler<ActionEvent> onClickLoadCommandButton = new EventHandler<>() {
+        @Override
+        public void handle(ActionEvent event) {
+            File openFile = openFile(loadButton.getScene().getWindow(), null);
+            if (openFile == null) { return; }
+
+            BufferedReader br;
+            try {
+                br = new BufferedReader(new FileReader(openFile));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "Unable to open file.");
+                return;
+            }
+            br.lines().forEach(s -> {
+                if (!s.startsWith("#") && s.contains("snort")) {
+                    // parse run command options
+                    CommandLine cmd;
+                    try {
+                        cmd = parser.parse(options, s.split(" "));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+
+                    for (Option option : cmd.getOptions()) {
+                        switch (option.getOpt()) {
+                            case "v":
+                                verboseCheckBox.setSelected(true);
+                                break;
+
+                            case "d":
+                                dumpApplicationLayerCheckBox.setSelected(true);
+                                break;
+
+                            case "e":
+                                ethernetLayerCheckBox.setSelected(true);
+                                break;
+
+                            case "l":
+                                logToDirectoryTextField.setText(option.getValue("/var/log/snort"));
+                                logToDirectoryCheckBox.setSelected(true);
+                                break;
+
+                            case "h":
+                                homeAddressTextField.setText(option.getValue());
+                                homeAddressCheckBox.setSelected(true);
+                                break;
+
+                            case "b":
+                                tcpdumpFormatCheckBox.setSelected(true);
+                                break;
+
+                            case "c":
+                                configurationFileLocationTextField.setText(option.getValue("/etc/snort/snort.conf"));
+                                configurationFileCheckBox.setSelected(true);
+                                break;
+
+                            case "A":
+                                alertModeChoiceBox.getSelectionModel().select(AlertMode.valueOf(option.getValue("FAST")));
+                                alertModeCheckBox.setSelected(true);
+                                break;
+
+                            case "s":
+                                sendAlertToSyslogCheckBox.setSelected(true);
+                                break;
+
+                            case "i":
+                                interfaceChoiceBox.getSelectionModel().select(option.getValue());
+                                interfaceCheckBox.setSelected(true);
+                                break;
+                        }
+                        // generatedCommandTextField.setText(s);
+                    }
+                }
+            });
+        }
+    };
+
+    EventHandler<ActionEvent> onClickFindConfigurationFileButton = new EventHandler<>() {
+        @Override
+        public void handle(ActionEvent event) {
+            File selectedFile = openFile(findConfigurationFileButton.getScene().getWindow(), "/etc/snort/");
+            if(selectedFile == null) return;
+            snortConfigurationFileLocationTextField.setText(selectedFile.getAbsolutePath());
+        }
+    };
+
+    EventHandler<ActionEvent> onClickOpenConfigurationFileButton = new EventHandler<>() {
+        @Override
+        public void handle(ActionEvent event) {
+            if(snortConfigurationFileLocationTextField.getText().isBlank()){
+                showAlert(Alert.AlertType.ERROR, "Please specify configuration files location");
+                return;
+            }
+
+            File configFile = new File(snortConfigurationFileLocationTextField.getText());
+            if(!configFile.canRead()){
+                showAlert(Alert.AlertType.ERROR, String.format("Cannot read specified rule file(%s). Try as root", configFile.getAbsolutePath()));
+                return;
+            }
+
+            generalConfigurationsToolBar.getChildrenUnmodifiable().forEach(node -> node.setDisable(true));
+            networkVariableTableView.setDisable(true);
+
+            Runnable openFile = () -> {
+                ConfigurationParser parser = new ConfigurationParser(configFile);
+
+                parsedNetworkVariables = FXCollections.observableArrayList(parser.parseNetworkVariables());
+                networkVariableTableView.setItems(parsedNetworkVariables);
+
+                // TODO: now what? use save button to update configuration file?
+                // if to do so, we need to remember where this network variable is declared in configuration file.
+                Platform.runLater(() -> {
+                    generalConfigurationsToolBar.getChildrenUnmodifiable().forEach(node -> node.setDisable(false));
+                    networkVariableTableView.setDisable(false);
+                });
+            };
+            service.submit(openFile);
+        }
+    };
+
+    EventHandler<TableColumn.CellEditEvent<NetworkVariable, String>> onEditCommitTypeColumn = event -> {
+        NetworkVariable networkVariable = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        networkVariable.setType(event.getNewValue());
+        // what's difference with NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
+    };
+    EventHandler<TableColumn.CellEditEvent<NetworkVariable, String>> onEditCommitNameColumn = event -> {
+        NetworkVariable networkVariable = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        networkVariable.setName(event.getNewValue());
+    };
+    EventHandler<TableColumn.CellEditEvent<NetworkVariable, String>> onEditCommitValueColumn = event -> {
+        NetworkVariable networkVariable = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        networkVariable.setValue(event.getNewValue());
+    };
 }
