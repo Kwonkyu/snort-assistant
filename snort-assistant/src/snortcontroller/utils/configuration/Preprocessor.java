@@ -1,13 +1,13 @@
 package snortcontroller.utils.configuration;
 
-public class NetworkDecoder {
+public class Preprocessor {
     String keyword;
-    String name;
+    String option;
     String value;
 
-    public NetworkDecoder(String keyword, String name, String value) {
+    public Preprocessor(String keyword, String option, String value) {
         this.keyword = keyword;
-        this.name = name;
+        this.option = option;
         this.value = value;
     }
 
@@ -19,12 +19,12 @@ public class NetworkDecoder {
         this.keyword = keyword;
     }
 
-    public String getName() {
-        return name;
+    public String getOption() {
+        return option;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setOption(String option) {
+        this.option = option;
     }
 
     public String getValue() {
@@ -35,7 +35,7 @@ public class NetworkDecoder {
         this.value = value;
     }
 
-    public NetworkDecoder copy(){
-        return new NetworkDecoder(keyword, name, value);
+    public Preprocessor copy(){
+        return new Preprocessor(keyword, option, value);
     }
 }

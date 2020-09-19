@@ -8,6 +8,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
@@ -182,6 +183,11 @@
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="networkVariableTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableTypeColumn" prefWidth="150.0" text="Type" />
+                                          <TableColumn fx:id="networkVariableNameTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableNameColumn" prefWidth="150.0" text="Name" />
+                                          <TableColumn fx:id="networkVariableValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="150.0" onEditCommit="#onEditCommitNetworkVariableValueColumn" prefWidth="250.0" text="Value" />
+                                       </columns>
                                     </TableView>
                                  </center>
                                  <top>
@@ -215,13 +221,18 @@
                                     </ToolBar>
                                  </top>
                                  <center>
-                                    <TableView fx:id="networkDecodersTableView" BorderPane.alignment="CENTER">
+                                    <TableView fx:id="networkDecodersTableView" editable="true" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
                                           <Insets />
                                        </BorderPane.margin>
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="networkDecoderKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="networkDecoderNameTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderNameColumn" prefWidth="150.0" text="Name" />
+                                          <TableColumn fx:id="networkDecoderValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderValueColumn" prefWidth="250.0" text="Value" />
+                                       </columns>
                                     </TableView>
                                  </center>
                                  <padding>
@@ -235,20 +246,25 @@
                                  <top>
                                     <ToolBar BorderPane.alignment="CENTER">
                                        <items>
-                                          <Button fx:id="dynamicModulesAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Add" />
-                                          <Button fx:id="dynamicModulesResetButton" mnemonicParsing="false" text="Reset" />
-                                          <Button fx:id="dynamicModulesHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" text="Help" />
+                                          <Button fx:id="dynamicModulesAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddDynamicModulesButton" text="Add" />
+                                          <Button fx:id="dynamicModulesResetButton" mnemonicParsing="false" onAction="#onClickResetDynamicModulesButton" text="Reset" />
+                                          <Button fx:id="dynamicModulesHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpDynamicModulesButton" text="Help" />
                                        </items>
                                     </ToolBar>
                                  </top>
                                  <center>
-                                    <TableView fx:id="dynamicModulesTableView" BorderPane.alignment="CENTER">
+                                    <TableView fx:id="dynamicModulesTableView" editable="true" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
                                           <Insets />
                                        </BorderPane.margin>
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="dynamicModuleTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleTypeColumn" prefWidth="150.0" text="Module Type" />
+                                          <TableColumn fx:id="dynamicModuleValueTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueTypeColumn" prefWidth="150.0" text="Value Type" />
+                                          <TableColumn fx:id="dynamicModuleValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueColumn" prefWidth="200.0" text="Value" />
+                                       </columns>
                                     </TableView>
                                  </center>
                                  <padding>
@@ -263,16 +279,25 @@
                                  <top>
                                     <ToolBar BorderPane.alignment="CENTER">
                                        <items>
-                                          <Button mnemonicParsing="false" text="Reset" />
-                                          <Button layoutX="10.0" layoutY="11.0" mnemonicParsing="false" text="Help" />
+                                          <Button fx:id="preprocessorAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddPreprocessorsButton" text="Add" />
+                                          <Button fx:id="preprocessorResetButton" mnemonicParsing="false" onAction="#onClickResetPreprocessorsButton" text="Reset" />
+                                          <Button fx:id="preprocessorHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpPreprocessorsButton" text="Help" />
                                        </items>
                                     </ToolBar>
                                  </top>
                                  <center>
-                                    <TableView BorderPane.alignment="CENTER">
+                                    <TableView fx:id="preprocessorTableView" editable="true" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
                                           <Insets />
                                        </BorderPane.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="preprocessorKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="preprocessorOptionTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorOptionColumn" prefWidth="150.0" text="Option" />
+                                          <TableColumn fx:id="preprocessorValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorValueColumn" prefWidth="250.0" text="Value" />
+                                       </columns>
                                     </TableView>
                                  </center>
                                  <padding>
@@ -287,16 +312,25 @@
                                  <top>
                                     <ToolBar BorderPane.alignment="CENTER">
                                        <items>
-                                          <Button mnemonicParsing="false" text="Reset" />
-                                          <Button layoutX="10.0" layoutY="11.0" mnemonicParsing="false" text="Help" />
+                                          <Button fx:id="outputModuleAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddOutputModulesButton" text="Add" />
+                                          <Button fx:id="outputModuleResetButton" mnemonicParsing="false" onAction="#onClickResetOutputModulesButton" text="Reset" />
+                                          <Button fx:id="outputModuleHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpOutputModulesButton" text="Help" />
                                        </items>
                                     </ToolBar>
                                  </top>
                                  <center>
-                                    <TableView BorderPane.alignment="CENTER">
+                                    <TableView fx:id="outputModuleTableView" editable="true" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
                                           <Insets />
                                        </BorderPane.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="outputModuleKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="outputModuleOptionTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleOptionColumn" prefWidth="100.0" text="Option" />
+                                          <TableColumn fx:id="outputModuleValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleValueColumn" prefWidth="-1.0" text="Value" />
+                                       </columns>
                                     </TableView>
                                  </center>
                                  <padding>
@@ -311,16 +345,24 @@
                                  <top>
                                     <ToolBar BorderPane.alignment="CENTER">
                                        <items>
-                                          <Button mnemonicParsing="false" text="Reset" />
-                                          <Button layoutX="10.0" layoutY="11.0" mnemonicParsing="false" text="Help" />
+                                          <Button fx:id="inclusionAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddInclusionButton" text="Add" />
+                                          <Button fx:id="inclusionResetButton" mnemonicParsing="false" onAction="#onClickResetInclusionButton" text="Reset" />
+                                          <Button fx:id="inclusionHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpInclusionButton" text="Help" />
                                        </items>
                                     </ToolBar>
                                  </top>
                                  <center>
-                                    <TableView BorderPane.alignment="CENTER">
+                                    <TableView fx:id="inclusionTableView" editable="true" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
                                           <Insets />
                                        </BorderPane.margin>
+                                       <columns>
+                                          <TableColumn fx:id="inclusionKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitInclusionKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="inclusionValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitInclusionValueColumn" prefWidth="-1.0" text="Value" />
+                                       </columns>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
                                     </TableView>
                                  </center>
                                  <padding>

@@ -27,7 +27,8 @@ public class NetworkDecoderParser {
                     networkDecoders.add(new NetworkDecoder(strings[0], strings[1], ""));
                 } else { // ex: config interface: <interface name>
                     if(strings[1].endsWith(":")){ // double check
-                        String value = line.substring(line.indexOf(strings[2]), line.length());
+                        // TODO: maybe indexOf(strings[2], line.indexOf(strings[1])+strings[1].length())?
+                        String value = line.substring(line.indexOf(strings[2]));
                         networkDecoders.add(new NetworkDecoder(strings[0], strings[1], value));
                     }
                 }

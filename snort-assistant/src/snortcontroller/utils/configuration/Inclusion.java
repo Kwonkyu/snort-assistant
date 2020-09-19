@@ -1,13 +1,11 @@
 package snortcontroller.utils.configuration;
 
-public class NetworkDecoder {
-    String keyword;
-    String name;
-    String value;
+public class Inclusion {
+    private String keyword;
+    private String value;
 
-    public NetworkDecoder(String keyword, String name, String value) {
+    public Inclusion(String keyword, String value) {
         this.keyword = keyword;
-        this.name = name;
         this.value = value;
     }
 
@@ -19,14 +17,6 @@ public class NetworkDecoder {
         this.keyword = keyword;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getValue() {
         return value;
     }
@@ -35,7 +25,15 @@ public class NetworkDecoder {
         this.value = value;
     }
 
-    public NetworkDecoder copy(){
-        return new NetworkDecoder(keyword, name, value);
+    public Inclusion copy(){
+        return new Inclusion(keyword, value);
+    }
+
+    @Override
+    public String toString() {
+        return "Inclusion{" +
+                "keyword='" + keyword + '\'' +
+                ", value='" + value + '\'' +
+                '}';
     }
 }

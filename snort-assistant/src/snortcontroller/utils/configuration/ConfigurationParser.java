@@ -15,23 +15,34 @@ public class ConfigurationParser {
         file = new File(location);
     }
 
-    public void parse(){
-        // TODO: integrate these?
-    }
-
+    // TODO: integrate these?
     public ArrayList<NetworkVariable> parseNetworkVariables() throws FileNotFoundException {
-        NetworkVariableParser networkVariableParser = new NetworkVariableParser(file.getAbsolutePath());
+        NetworkVariableParser networkVariableParser = new NetworkVariableParser(file);
         return networkVariableParser.parse();
     }
 
     public ArrayList<NetworkDecoder> parseNetworkDecoders() throws FileNotFoundException {
-        NetworkDecoderParser networkDecoderParser = new NetworkDecoderParser(file.getAbsolutePath());
+        NetworkDecoderParser networkDecoderParser = new NetworkDecoderParser(file);
         return networkDecoderParser.parse();
     }
 
     public ArrayList<DynamicModule> parseDynamicModules() throws FileNotFoundException {
-        DynamicModuleParser dynamicModuleParser = new DynamicModuleParser(file.getAbsoluteFile());
+        DynamicModuleParser dynamicModuleParser = new DynamicModuleParser(file);
         return dynamicModuleParser.parse();
     }
-    // TODO: implement another parsings...
+
+    public ArrayList<Preprocessor> parsePreprocessors() throws FileNotFoundException {
+        PreprocessorParser preprocessorParser = new PreprocessorParser(file);
+        return preprocessorParser.parse();
+    }
+
+    public ArrayList<OutputModule> parseOutputModules() throws FileNotFoundException {
+        OutputModuleParser outputModuleParser = new OutputModuleParser(file);
+        return outputModuleParser.parse();
+    }
+
+    public ArrayList<Inclusion> parseInclusions() throws FileNotFoundException {
+        InclusionParser inclusionParser = new InclusionParser(file);
+        return inclusionParser.parse();
+    }
 }

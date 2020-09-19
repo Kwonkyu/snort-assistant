@@ -4,10 +4,8 @@ import javafx.application.Platform;
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.SimpleMapProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -19,15 +17,13 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import org.apache.commons.cli.*;
 import snortcontroller.utils.SingleThreadExecutorSingleton;
-import snortcontroller.utils.configuration.ConfigurationParser;
-import snortcontroller.utils.configuration.DynamicModule;
-import snortcontroller.utils.configuration.NetworkDecoder;
-import snortcontroller.utils.configuration.NetworkVariable;
+import snortcontroller.utils.configuration.*;
 
 import java.io.*;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
@@ -93,30 +89,66 @@ public class SnortController implements Initializable {
     @FXML Button networkVariablesAddButton;
     @FXML Button networkVariablesResetButton;
     @FXML Button networkVariablesHelpButton;
+    @FXML TableColumn<NetworkVariable, String> networkVariableTypeTableColumn;
+    @FXML TableColumn<NetworkVariable, String> networkVariableNameTableColumn;
+    @FXML TableColumn<NetworkVariable, String> networkVariableValueTableColumn;
 
     // network decoders tableview elements
     @FXML TableView<NetworkDecoder> networkDecodersTableView;
     @FXML Button networkDecodersAddButton;
     @FXML Button networkDecodersResetButton;
     @FXML Button networkDecodersHelpButton;
+    @FXML TableColumn<NetworkDecoder, String> networkDecoderKeywordTableColumn;
+    @FXML TableColumn<NetworkDecoder, String> networkDecoderNameTableColumn;
+    @FXML TableColumn<NetworkDecoder, String> networkDecoderValueTableColumn;
 
     // dynamic modules tableview elements
     @FXML TableView<DynamicModule> dynamicModulesTableView;
     @FXML Button dynamicModulesAddButton;
     @FXML Button dynamicModulesResetButton;
     @FXML Button dynamicModulesHelpButton;
+    @FXML TableColumn<DynamicModule, String> dynamicModuleTypeTableColumn;
+    @FXML TableColumn<DynamicModule, String> dynamicModuleValueTypeTableColumn;
+    @FXML TableColumn<DynamicModule, String> dynamicModuleValueTableColumn;
 
+    // preprocessors tableview elements
+    @FXML TableView<Preprocessor> preprocessorTableView;
+    @FXML Button preprocessorAddButton;
+    @FXML Button preprocessorResetButton;
+    @FXML Button preprocessorHelpButton;
+    @FXML TableColumn<Preprocessor, String> preprocessorKeywordTableColumn;
+    @FXML TableColumn<Preprocessor, String> preprocessorOptionTableColumn;
+    @FXML TableColumn<Preprocessor, String> preprocessorValueTableColumn;
+
+    // output modules tableview elements
+    @FXML TableView<OutputModule> outputModuleTableView;
+    @FXML Button outputModuleAddButton;
+    @FXML Button outputModuleResetButton;
+    @FXML Button outputModuleHelpButton;
+    @FXML TableColumn<OutputModule, String> outputModuleKeywordTableColumn;
+    @FXML TableColumn<OutputModule, String> outputModuleOptionTableColumn;
+    @FXML TableColumn<OutputModule, String> outputModuleValueTableColumn;
+
+    // inclusion tableview elements
+    @FXML TableView<Inclusion> inclusionTableView;
+    @FXML Button inclusionAddButton;
+    @FXML Button inclusionResetButton;
+    @FXML Button inclusionHelpButton;
+    @FXML TableColumn<Inclusion, String> inclusionKeywordTableColumn;
+    @FXML TableColumn<Inclusion, String> inclusionValueTableColumn;
 
     ObservableMap<String, String> selectedOptions = FXCollections.observableHashMap();
     MapProperty<String, String> selectedOptionsProperty = new SimpleMapProperty<>(selectedOptions);
-    ObservableList<NetworkVariable> parsedNetworkVariables = FXCollections.observableArrayList();
-    ObservableList<NetworkDecoder> parsedNetworkDecoders = FXCollections.observableArrayList();
-    ObservableList<DynamicModule> parsedDynamicModules = FXCollections.observableArrayList();
+    ArrayList<NetworkVariable> parsedNetworkVariables;
+    ArrayList<NetworkDecoder> parsedNetworkDecoders;
+    ArrayList<DynamicModule> parsedDynamicModules;
+    ArrayList<Preprocessor> parsedPreprocessors;
+    ArrayList<OutputModule> parsedOutputModules;
+    ArrayList<Inclusion> parsedInclusions;
 
     CommandLineParser parser = null;
     Options options = null;
 
-    MainController mainControllerLoader;
     ExecutorService service = SingleThreadExecutorSingleton.getService();
 
     enum AlertMode {
@@ -137,6 +169,7 @@ public class SnortController implements Initializable {
         return generatedCommandTextField.getText().length() > 0 ? generatedCommandTextField.getText() : "snort";
     }
 
+    // TODO: move these to user interactions.
     private File openFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
         final FileChooser fileChooser = new FileChooser();
         if(initialDirectory != null && new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
@@ -160,9 +193,6 @@ public class SnortController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // init FXML loader
-        mainControllerLoader = new FXMLLoader(getClass().getResource("maincontroller.fxml")).getController();
-
         // initialize options
         parser = new DefaultParser();
         options = new Options();
@@ -360,73 +390,58 @@ public class SnortController implements Initializable {
         etcResetButton.setOnAction(event -> interfaceCheckBox.setSelected(false));
 
 
+        // GENERAL CONFIGURATIONS TAB.
         // network variables
-        TableColumn<NetworkVariable, String> variableTypeTableColumn = new TableColumn<>("Type");
-        TableColumn<NetworkVariable, String> variableNameTableColumn = new TableColumn<>("Name");
-        TableColumn<NetworkVariable, String> variableValueTableColumn = new TableColumn<>("Value");
+        networkVariableTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+        networkVariableNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        networkVariableValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        variableTypeTableColumn.setMinWidth(100.0);
-        variableNameTableColumn.setMinWidth(100.0);
-        variableValueTableColumn.setMinWidth(250.0);
-
-        variableTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
-        variableNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        variableValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
-
-        variableTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        variableNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        variableValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
-        variableTypeTableColumn.setOnEditCommit(onEditCommitNetworkVariableTypeColumn);
-        variableNameTableColumn.setOnEditCommit(onEditCommitNetworkVariableNameColumn);
-        variableValueTableColumn.setOnEditCommit(onEditCommitNetworkVariableValueColumn);
-
-        networkVariablesTableView.setEditable(true);
-        networkVariablesTableView.getColumns().addAll(variableTypeTableColumn, variableNameTableColumn, variableValueTableColumn);
+        networkVariableTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        networkVariableNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        networkVariableValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
         // network decoders
-        TableColumn<NetworkDecoder, String> decoderKeywordTableColumn = new TableColumn<>("Keyword");
-        TableColumn<NetworkDecoder, String> decoderNameTableColumn = new TableColumn<>("Name");
-        TableColumn<NetworkDecoder, String> decoderValueTableColumn = new TableColumn<>("Value");
+        networkDecoderKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
+        networkDecoderNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        networkDecoderValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        decoderKeywordTableColumn.setMinWidth(100.0);
-        decoderNameTableColumn.setMinWidth(100.0);
-        decoderValueTableColumn.setMinWidth(250.0);
-
-        decoderKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
-        decoderNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        decoderValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
-
-        decoderKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        decoderNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        decoderValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
-        decoderKeywordTableColumn.setOnEditCommit(onEditCommitNetworkDecoderKeywordColumn);
-        decoderNameTableColumn.setOnEditCommit(onEditCommitNetworkDecoderNameColumn);
-        decoderValueTableColumn.setOnEditCommit(onEditCommitNetworkDecoderValueColumn);
-
-        networkDecodersTableView.setEditable(true);
-        networkDecodersTableView.getColumns().addAll(decoderKeywordTableColumn, decoderNameTableColumn, decoderValueTableColumn);
+        networkDecoderKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        networkDecoderNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        networkDecoderValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
         // dynamic modules
-        TableColumn<DynamicModule, String> moduleTypeTableColumn = new TableColumn<>("Module Type");
-        TableColumn<DynamicModule, String> moduleValueTypeTableColumn = new TableColumn<>("Value Type");
-        TableColumn<DynamicModule, String> moduleValueTableColumn = new TableColumn<>("Value");
+        dynamicModuleTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("moduleType"));
+        dynamicModuleValueTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("valueType"));
+        dynamicModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        moduleTypeTableColumn.setMinWidth(150.0);
-        moduleValueTypeTableColumn.setMinWidth(150.0);
-        moduleValueTableColumn.setMinWidth(300.0);
+        dynamicModuleTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        dynamicModuleValueTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        dynamicModuleValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
-        moduleTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("moduleType"));
-        moduleValueTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("valueType"));
-        moduleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+        // preprocessors
+        preprocessorKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
+        preprocessorOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
+        preprocessorValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        moduleTypeTableColumn.setOnEditCommit(onEditCommitDynamicModuleTypeColumn);
-        moduleValueTypeTableColumn.setOnEditCommit(onEditCommitDynamicModuleValueTypeColumn);
-        moduleValueTableColumn.setOnEditCommit(onEditCommitDynamicModuleValueColumn);
+        preprocessorKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        preprocessorOptionTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        preprocessorValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
-        dynamicModulesTableView.setEditable(true);
-        dynamicModulesTableView.getColumns().addAll(moduleTypeTableColumn, moduleValueTypeTableColumn, moduleValueTableColumn);
+        // output modules
+        outputModuleKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
+        outputModuleOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
+        outputModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+        outputModuleKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        outputModuleOptionTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        outputModuleValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        // file inclusions
+        inclusionKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
+        inclusionValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+        inclusionKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        inclusionValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
     }
 
     // run command button handlers
@@ -527,7 +542,6 @@ public class SnortController implements Initializable {
                             interfaceCheckBox.setSelected(true);
                             break;
                     }
-                    // generatedCommandTextField.setText(s);
                 }
             }
         });
@@ -557,27 +571,62 @@ public class SnortController implements Initializable {
 
         generalConfigurationsToolBar.getChildrenUnmodifiable().forEach(node -> node.setDisable(true));
         networkVariablesTableView.setDisable(true);
+        networkDecodersTableView.setDisable(true);
+        dynamicModulesTableView.setDisable(true);
+        preprocessorTableView.setDisable(true);
+        outputModuleTableView.setDisable(true);
+        inclusionTableView.setDisable(true);
 
         Runnable openFile = () -> {
             ConfigurationParser parser = new ConfigurationParser(configFile);
 
-            // TODO: divide edited one and original?
             try {
-                parsedNetworkVariables = FXCollections.observableArrayList(parser.parseNetworkVariables());
-                parsedNetworkDecoders = FXCollections.observableArrayList(parser.parseNetworkDecoders());
-                parsedDynamicModules = FXCollections.observableArrayList(parser.parseDynamicModules());
-                networkVariablesTableView.setItems(parsedNetworkVariables);
-                networkDecodersTableView.setItems(parsedNetworkDecoders);
-                dynamicModulesTableView.setItems(parsedDynamicModules);
+                parsedNetworkVariables = parser.parseNetworkVariables();
+                parsedNetworkDecoders = parser.parseNetworkDecoders();
+                parsedDynamicModules = parser.parseDynamicModules();
+                parsedPreprocessors = parser.parsePreprocessors();
+                parsedOutputModules = parser.parseOutputModules();
+                parsedInclusions = parser.parseInclusions();
+
+                ArrayList<NetworkVariable> editedNetworkVariables = new ArrayList<>();
+                ArrayList<NetworkDecoder> editedNetworkDecoders = new ArrayList<>();
+                ArrayList<DynamicModule> editedDynamicModules = new ArrayList<>();
+                ArrayList<Preprocessor> editedPreprocessors = new ArrayList<>();
+                ArrayList<OutputModule> editedOutputModules = new ArrayList<>();
+                ArrayList<Inclusion> editedInclusions = new ArrayList<>();
+
+                parsedNetworkVariables.forEach(networkVariable -> editedNetworkVariables.add(networkVariable.copy()));
+                parsedNetworkDecoders.forEach(networkDecoder -> editedNetworkDecoders.add(networkDecoder.copy()));
+                parsedDynamicModules.forEach(dynamicModule -> editedDynamicModules.add(dynamicModule.copy()));
+                parsedPreprocessors.forEach(preprocessor -> editedPreprocessors.add(preprocessor.copy()));
+                parsedOutputModules.forEach(outputModule -> editedOutputModules.add(outputModule.copy()));
+                parsedInclusions.forEach(inclusion -> editedInclusions.add(inclusion.copy()));
+
+                networkVariablesTableView.setItems(FXCollections.observableArrayList(editedNetworkVariables));
+                networkDecodersTableView.setItems(FXCollections.observableArrayList(editedNetworkDecoders));
+                dynamicModulesTableView.setItems(FXCollections.observableArrayList(editedDynamicModules));
+                preprocessorTableView.setItems(FXCollections.observableArrayList(editedPreprocessors));
+                outputModuleTableView.setItems(FXCollections.observableArrayList(editedOutputModules));
+                inclusionTableView.setItems(FXCollections.observableArrayList(editedInclusions));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
 
-            // TODO: now what? use save button to update configuration file?
-            // if to do so, we need to remember where this network variable is declared in configuration file.
+            networkVariablesTableView.itemsProperty().addListener((observable, oldValue, newValue) -> networkVariablesTableView.refresh());
+            networkDecodersTableView.itemsProperty().addListener((observable, oldValue, newValue) -> networkDecodersTableView.refresh());
+            dynamicModulesTableView.itemsProperty().addListener((observable, oldValue, newValue) -> dynamicModulesTableView.refresh());
+            preprocessorTableView.itemsProperty().addListener((observable, oldValue, newValue) -> preprocessorTableView.refresh());
+            outputModuleTableView.itemsProperty().addListener((observable, oldValue, newValue) -> outputModuleTableView.refresh());
+            inclusionTableView.itemsProperty().addListener((observable, oldValue, newValue) -> inclusionTableView.refresh());
+
             Platform.runLater(() -> {
                 generalConfigurationsToolBar.getChildrenUnmodifiable().forEach(node -> node.setDisable(false));
                 networkVariablesTableView.setDisable(false);
+                networkDecodersTableView.setDisable(false);
+                dynamicModulesTableView.setDisable(false);
+                preprocessorTableView.setDisable(false);
+                outputModuleTableView.setDisable(false);
+                inclusionTableView.setDisable(false);
             });
         };
         service.submit(openFile);
@@ -589,78 +638,198 @@ public class SnortController implements Initializable {
     private void onClickAddNetworkVariablesButton(ActionEvent event){
 
     }
-
-    // TODO: implement here
     @FXML
-    private void onClickResetNetworkVariablesButton(ActionEvent event){
-
+    private void onClickResetNetworkVariablesButton(){
+        networkVariablesTableView.getItems().clear();
+        parsedNetworkVariables.forEach(networkVariable -> networkVariablesTableView.getItems().add(networkVariable.copy()));
+        // binding direction editedNetworkVariables to tableview's observable list? changes are applied to data structure
+        // but not towards observable list. maybe setItems() event should happen.
     }
-
     @FXML
-    private void onClickHelpNetworkVariablesButton(ActionEvent event){
+    private void onClickHelpNetworkVariablesButton(){
         String string = "-- DEFAULT VARIABLES --\n" +
                 "HOME_NET: Use this to specify the IP addresses of the systems you are protecting.\n" +
                 "EXTERNAL_NET: Use this to specify the IP addresses outside of the systems you are protecting.\n";
         showAlert(Alert.AlertType.INFORMATION, string);
     }
 
-
     // network decoders button handlers
     @FXML  // TODO: implement here
     private void onClickAddNetworkDecodersButton(ActionEvent event){
 
     }
-
-    @FXML // TODO: implement here
-    private void onClickResetNetworkDecodersButton(ActionEvent event){
-
+    @FXML
+    private void onClickResetNetworkDecodersButton(){
+        networkDecodersTableView.getItems().clear();
+        parsedNetworkDecoders.forEach(networkDecoder -> networkDecodersTableView.getItems().add(networkDecoder.copy()));
     }
-
     @FXML
     private void onClickHelpNetworkDecodersButton(){
-        String string = "The Snort decoder watches the structure of network packets to make sure they are constructed according to specification.";
+        String string = "The Snort decoder watches the structure of network packets to make sure they are constructed " +
+                "according to specification.";
         showAlert(Alert.AlertType.INFORMATION, string);
     }
 
+    // dynamic modules button handlers
+    @FXML // TODO: implement here
+    private void onClickAddDynamicModulesButton(ActionEvent event){
+
+    }
+    @FXML
+    private void onClickResetDynamicModulesButton(){
+        dynamicModulesTableView.getItems().clear();
+        parsedDynamicModules.forEach(dynamicModule -> dynamicModulesTableView.getItems().add(dynamicModule.copy()));
+    }
+    @FXML
+    private void onClickHelpDynamicModulesButton(){
+        String string = "Dynamically loadable modules were introduced with Snort 2.6." +
+                " They can be loaded via directives in snort.conf or via command-line options.";
+        showAlert(Alert.AlertType.INFORMATION, string);
+    }
+
+    // preprocessors button handlers
+    @FXML // TODO: implement here
+    private void onClickAddPreprocessorsButton(ActionEvent event){
+
+    }
+    @FXML
+    private void onClickResetPreprocessorsButton(){
+        preprocessorTableView.getItems().clear();
+        parsedPreprocessors.forEach(preprocessor -> preprocessorTableView.getItems().add(preprocessor.copy()));
+    }
+    @FXML
+    private void onClickHelpPreprocessorsButton(){
+        String string = "Preprocessors were introduced in version 1.5 of Snort. They allow the functionality of Snort" +
+                " to be extended by allowing users and programmers to drop modular plugins into Snort fairly easily.";
+        showAlert(Alert.AlertType.INFORMATION, string);
+    }
+
+    // output modules button handlers
+    @FXML // TODO: implement here
+    private void onClickAddOutputModulesButton(ActionEvent event){
+
+    }
+    @FXML
+    private void onClickResetOutputModulesButton(){
+        outputModuleTableView.getItems().clear();
+        parsedOutputModules.forEach(outputModule -> outputModuleTableView.getItems().add(outputModule.copy()));
+    }
+    @FXML
+    private void onClickHelpOutputModulesButton(){
+        String string = "They allow Snort to be much more flexible in the formatting and presentation of output to its users. " +
+                "The output modules are run when the alert or logging subsystems of Snort are called, after the preprocessors and detection engine.";
+        showAlert(Alert.AlertType.INFORMATION, string);
+    }
+
+    // inclusion button handlers
+    @FXML // TODO: implement here
+    private void onClickAddInclusionButton(ActionEvent event){
+
+    }
+    @FXML
+    private void onClickResetInclusionButton(){
+        inclusionTableView.getItems().clear();
+        parsedInclusions.forEach(inclusion -> inclusionTableView.getItems().add(inclusion.copy()));
+    }
+    @FXML
+    private void onClickHelpInclusionButton(){
+        String string = "The include command tells Snort to include the information in files located in the Snort sensor's filesystem." +
+                " These files include configuration information and the files containing the rules that Snort uses to catch bad guys.";
+        showAlert(Alert.AlertType.INFORMATION, string);
+    }
 
     // cell edit commmit event handlers
-    EventHandler<TableColumn.CellEditEvent<NetworkVariable, String>> onEditCommitNetworkVariableTypeColumn = event -> {
-        NetworkVariable networkVariable = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    @FXML
+    private void onEditCommitNetworkVariableTypeColumn(TableColumn.CellEditEvent<NetworkVariable, String> event){
+        NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
         networkVariable.setType(event.getNewValue());
         // what's difference with NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
-    };
-    EventHandler<TableColumn.CellEditEvent<NetworkVariable, String>> onEditCommitNetworkVariableNameColumn = event -> {
-        NetworkVariable networkVariable = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    }
+    @FXML
+    private void onEditCommitNetworkVariableNameColumn(TableColumn.CellEditEvent<NetworkVariable, String> event){
+        NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
         networkVariable.setName(event.getNewValue());
-    };
-    EventHandler<TableColumn.CellEditEvent<NetworkVariable, String>> onEditCommitNetworkVariableValueColumn = event -> {
-        NetworkVariable networkVariable = event.getTableView().getItems().get(event.getTablePosition().getRow());
+        // what's difference with NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
+    }
+    @FXML
+    private void onEditCommitNetworkVariableValueColumn(TableColumn.CellEditEvent<NetworkVariable, String> event){
+        NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
         networkVariable.setValue(event.getNewValue());
-    };
+        // what's difference with NetworkVariable networkVariable = event.getTableView().getSelectionModel().getSelectedItem();
+    }
 
-    EventHandler<TableColumn.CellEditEvent<NetworkDecoder, String>> onEditCommitNetworkDecoderKeywordColumn = event -> {
-        NetworkDecoder networkDecoder = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    @FXML
+    private void onEditCommitNetworkDecoderKeywordColumn(TableColumn.CellEditEvent<NetworkDecoder, String> event){
+        NetworkDecoder networkDecoder = event.getTableView().getSelectionModel().getSelectedItem();
         networkDecoder.setKeyword(event.getNewValue());
-    };
-    EventHandler<TableColumn.CellEditEvent<NetworkDecoder, String>> onEditCommitNetworkDecoderNameColumn = event -> {
-        NetworkDecoder networkDecoder = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    }
+    @FXML
+    private void onEditCommitNetworkDecoderNameColumn(TableColumn.CellEditEvent<NetworkDecoder, String> event) {
+        NetworkDecoder networkDecoder = event.getTableView().getSelectionModel().getSelectedItem();
         networkDecoder.setName(event.getNewValue());
-    };
-    EventHandler<TableColumn.CellEditEvent<NetworkDecoder, String>> onEditCommitNetworkDecoderValueColumn = event -> {
-        NetworkDecoder networkDecoder = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    }
+    @FXML
+    private void onEditCommitNetworkDecoderValueColumn(TableColumn.CellEditEvent<NetworkDecoder, String> event) {
+        NetworkDecoder networkDecoder = event.getTableView().getSelectionModel().getSelectedItem();
         networkDecoder.setValue(event.getNewValue());
-    };
+    }
 
-    EventHandler<TableColumn.CellEditEvent<DynamicModule, String>> onEditCommitDynamicModuleTypeColumn = event -> {
-        DynamicModule dynamicModule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    @FXML
+    private void onEditCommitDynamicModuleTypeColumn(TableColumn.CellEditEvent<DynamicModule, String> event){
+        DynamicModule dynamicModule = event.getTableView().getSelectionModel().getSelectedItem();
         dynamicModule.setModuleType(event.getNewValue());
     };
-    EventHandler<TableColumn.CellEditEvent<DynamicModule, String>> onEditCommitDynamicModuleValueTypeColumn = event -> {
-        DynamicModule dynamicModule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    @FXML
+    private void onEditCommitDynamicModuleValueTypeColumn(TableColumn.CellEditEvent<DynamicModule, String> event){
+        DynamicModule dynamicModule = event.getTableView().getSelectionModel().getSelectedItem();
         dynamicModule.setValueType(event.getNewValue());
-    };
-    EventHandler<TableColumn.CellEditEvent<DynamicModule, String>> onEditCommitDynamicModuleValueColumn = event -> {
-        DynamicModule dynamicModule = event.getTableView().getItems().get(event.getTablePosition().getRow());
+    }
+    @FXML
+    private void onEditCommitDynamicModuleValueColumn(TableColumn.CellEditEvent<DynamicModule, String> event){
+        DynamicModule dynamicModule = event.getTableView().getSelectionModel().getSelectedItem();
         dynamicModule.setValue(event.getNewValue());
-    };
+    }
+
+    @FXML
+    private void onEditCommitPreprocessorKeywordColumn(TableColumn.CellEditEvent<Preprocessor, String> event){
+        Preprocessor preprocessor = event.getTableView().getSelectionModel().getSelectedItem();
+        preprocessor.setKeyword(event.getNewValue());
+    }
+    @FXML
+    private void onEditCommitPreprocessorOptionColumn(TableColumn.CellEditEvent<Preprocessor, String> event){
+        Preprocessor preprocessor = event.getTableView().getSelectionModel().getSelectedItem();
+        preprocessor.setOption(event.getNewValue());
+    }
+    @FXML
+    private void onEditCommitPreprocessorValueColumn(TableColumn.CellEditEvent<Preprocessor, String> event){
+        Preprocessor preprocessor = event.getTableView().getSelectionModel().getSelectedItem();
+        preprocessor.setValue(event.getNewValue());
+    }
+
+    @FXML
+    private void onEditCommitOutputModuleKeywordColumn(TableColumn.CellEditEvent<OutputModule, String> event){
+        OutputModule outputModule = event.getTableView().getSelectionModel().getSelectedItem();
+        outputModule.setKeyword(event.getNewValue());
+    }
+    @FXML
+    private void onEditCommitOutputModuleOptionColumn(TableColumn.CellEditEvent<OutputModule, String> event){
+        OutputModule outputModule = event.getTableView().getSelectionModel().getSelectedItem();
+        outputModule.setOption(event.getNewValue());
+    }
+    @FXML
+    private void onEditCommitOutputModuleValueColumn(TableColumn.CellEditEvent<OutputModule, String> event){
+        OutputModule outputModule = event.getTableView().getSelectionModel().getSelectedItem();
+        outputModule.setValue(event.getNewValue());
+    }
+
+    @FXML
+    private void onEditCommitInclusionKeywordColumn(TableColumn.CellEditEvent<Inclusion, String> event){
+        Inclusion inclusion = event.getTableView().getSelectionModel().getSelectedItem();
+        inclusion.setKeyword(event.getNewValue());
+    }
+    @FXML
+    private void onEditCommitInclusionValueColumn(TableColumn.CellEditEvent<Inclusion, String> event){
+        Inclusion inclusion = event.getTableView().getSelectionModel().getSelectedItem();
+        inclusion.setValue(event.getNewValue());
+    }
 }

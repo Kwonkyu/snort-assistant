@@ -42,4 +42,8 @@ public class NetworkVariable {
         // return super.toString();
         return String.format("[%s:%s %s]\n", name, type, value);
     }
+
+    public NetworkVariable copy(){
+        return new NetworkVariable(type, name, value);
+    }
 }

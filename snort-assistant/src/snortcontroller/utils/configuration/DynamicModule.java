@@ -34,4 +34,10 @@ public class DynamicModule {
     public void setValue(String value) {
         this.value = value;
     }
+
+    public DynamicModule copy(){
+        return new DynamicModule(moduleType, valueType, value);
+    }
 }
+
+// check http://books.gigatux.nl/mirror/snortids/0596006616/snortids-CHP-5-SECT-2.html
