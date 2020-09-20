@@ -180,14 +180,14 @@
                               <BorderPane>
                                  <center>
                                     <TableView fx:id="networkVariablesTableView" editable="true">
+                                       <columns>
+                                          <TableColumn fx:id="networkVariableTypeTableColumn" maxWidth="150.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableTypeColumn" prefWidth="100.0" text="Type" />
+                                          <TableColumn fx:id="networkVariableNameTableColumn" maxWidth="500.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableNameColumn" prefWidth="300.0" text="Name" />
+                                          <TableColumn fx:id="networkVariableValueTableColumn" minWidth="150.0" onEditCommit="#onEditCommitNetworkVariableValueColumn" prefWidth="350.0" text="Value" />
+                                       </columns>
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
-                                       <columns>
-                                          <TableColumn fx:id="networkVariableTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableTypeColumn" prefWidth="150.0" text="Type" />
-                                          <TableColumn fx:id="networkVariableNameTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableNameColumn" prefWidth="150.0" text="Name" />
-                                          <TableColumn fx:id="networkVariableValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="150.0" onEditCommit="#onEditCommitNetworkVariableValueColumn" prefWidth="250.0" text="Value" />
-                                       </columns>
                                     </TableView>
                                  </center>
                                  <top>
@@ -230,8 +230,8 @@
                                        </columnResizePolicy>
                                        <columns>
                                           <TableColumn fx:id="networkDecoderKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderKeywordColumn" prefWidth="150.0" text="Keyword" />
-                                          <TableColumn fx:id="networkDecoderNameTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderNameColumn" prefWidth="150.0" text="Name" />
-                                          <TableColumn fx:id="networkDecoderValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderValueColumn" prefWidth="250.0" text="Value" />
+                                          <TableColumn fx:id="networkDecoderNameTableColumn" maxWidth="500.0" minWidth="200.0" onEditCommit="#onEditCommitNetworkDecoderNameColumn" prefWidth="300.0" text="Name" />
+                                          <TableColumn fx:id="networkDecoderValueTableColumn" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderValueColumn" prefWidth="250.0" text="Value" />
                                        </columns>
                                     </TableView>
                                  </center>
@@ -261,9 +261,9 @@
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
                                        <columns>
-                                          <TableColumn fx:id="dynamicModuleTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleTypeColumn" prefWidth="150.0" text="Module Type" />
-                                          <TableColumn fx:id="dynamicModuleValueTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueTypeColumn" prefWidth="150.0" text="Value Type" />
-                                          <TableColumn fx:id="dynamicModuleValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueColumn" prefWidth="200.0" text="Value" />
+                                          <TableColumn fx:id="dynamicModuleTypeTableColumn" maxWidth="300.0" minWidth="150.0" onEditCommit="#onEditCommitDynamicModuleTypeColumn" prefWidth="200.0" text="Module Type" />
+                                          <TableColumn fx:id="dynamicModuleValueTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueTypeColumn" prefWidth="200.0" text="Value Type" />
+                                          <TableColumn fx:id="dynamicModuleValueTableColumn" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueColumn" prefWidth="200.0" text="Value" />
                                        </columns>
                                     </TableView>
                                  </center>
@@ -294,9 +294,9 @@
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                        </columnResizePolicy>
                                        <columns>
-                                          <TableColumn fx:id="preprocessorKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorKeywordColumn" prefWidth="150.0" text="Keyword" />
-                                          <TableColumn fx:id="preprocessorOptionTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorOptionColumn" prefWidth="150.0" text="Option" />
-                                          <TableColumn fx:id="preprocessorValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorValueColumn" prefWidth="250.0" text="Value" />
+                                          <TableColumn fx:id="preprocessorKeywordTableColumn" maxWidth="300.0" minWidth="150.0" onEditCommit="#onEditCommitPreprocessorKeywordColumn" prefWidth="200.0" text="Keyword" />
+                                          <TableColumn fx:id="preprocessorOptionTableColumn" maxWidth="250.0" minWidth="150.0" onEditCommit="#onEditCommitPreprocessorOptionColumn" prefWidth="200.0" text="Option" />
+                                          <TableColumn fx:id="preprocessorValueTableColumn" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorValueColumn" prefWidth="250.0" text="Value" />
                                        </columns>
                                     </TableView>
                                  </center>
@@ -328,8 +328,8 @@
                                        </columnResizePolicy>
                                        <columns>
                                           <TableColumn fx:id="outputModuleKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleKeywordColumn" prefWidth="150.0" text="Keyword" />
-                                          <TableColumn fx:id="outputModuleOptionTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleOptionColumn" prefWidth="100.0" text="Option" />
-                                          <TableColumn fx:id="outputModuleValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleValueColumn" prefWidth="-1.0" text="Value" />
+                                          <TableColumn fx:id="outputModuleOptionTableColumn" maxWidth="300.0" minWidth="200.0" onEditCommit="#onEditCommitOutputModuleOptionColumn" prefWidth="250.0" text="Option" />
+                                          <TableColumn fx:id="outputModuleValueTableColumn" minWidth="300.0" onEditCommit="#onEditCommitOutputModuleValueColumn" prefWidth="500.0" text="Value" />
                                        </columns>
                                     </TableView>
                                  </center>
@@ -358,7 +358,7 @@
                                        </BorderPane.margin>
                                        <columns>
                                           <TableColumn fx:id="inclusionKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitInclusionKeywordColumn" prefWidth="150.0" text="Keyword" />
-                                          <TableColumn fx:id="inclusionValueTableColumn" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#onEditCommitInclusionValueColumn" prefWidth="-1.0" text="Value" />
+                                          <TableColumn fx:id="inclusionValueTableColumn" minWidth="300.0" onEditCommit="#onEditCommitInclusionValueColumn" prefWidth="-1.0" text="Value" />
                                        </columns>
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

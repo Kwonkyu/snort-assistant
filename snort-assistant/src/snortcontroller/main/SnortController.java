@@ -4,17 +4,22 @@ import javafx.application.Platform;
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.SimpleMapProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.apache.commons.cli.*;
 import snortcontroller.utils.SingleThreadExecutorSingleton;
 import snortcontroller.utils.configuration.*;
@@ -28,7 +33,7 @@ import java.util.Enumeration;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 
-import static snortcontroller.utils.UserInteractions.showAlert;
+import static snortcontroller.utils.UserInteractions.*;
 
 public class SnortController implements Initializable {
 
@@ -137,6 +142,7 @@ public class SnortController implements Initializable {
     @FXML TableColumn<Inclusion, String> inclusionKeywordTableColumn;
     @FXML TableColumn<Inclusion, String> inclusionValueTableColumn;
 
+
     ObservableMap<String, String> selectedOptions = FXCollections.observableHashMap();
     MapProperty<String, String> selectedOptionsProperty = new SimpleMapProperty<>(selectedOptions);
     ArrayList<NetworkVariable> parsedNetworkVariables;
@@ -146,7 +152,6 @@ public class SnortController implements Initializable {
     ArrayList<OutputModule> parsedOutputModules;
     ArrayList<Inclusion> parsedInclusions;
 
-    CommandLineParser parser = null;
     Options options = null;
 
     ExecutorService service = SingleThreadExecutorSingleton.getService();
@@ -169,34 +174,10 @@ public class SnortController implements Initializable {
         return generatedCommandTextField.getText().length() > 0 ? generatedCommandTextField.getText() : "snort";
     }
 
-    // TODO: move these to user interactions.
-    private File openFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
-        final FileChooser fileChooser = new FileChooser();
-        if(initialDirectory != null && new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
-        fileChooser.getExtensionFilters().clear();
-        for (FileChooser.ExtensionFilter filter : filters) fileChooser.setSelectedExtensionFilter(filter);
-        return fileChooser.showOpenDialog(window);
-    }
-
-    private File chooseDirectory(Window window){
-        final DirectoryChooser directoryChooser = new DirectoryChooser();
-        return directoryChooser.showDialog(window);
-    }
-
-    private File saveFile(Window window, String initialDirectory, FileChooser.ExtensionFilter... filters){
-        final FileChooser fileChooser = new FileChooser();
-        if(initialDirectory != null && new File(initialDirectory).exists()) fileChooser.setInitialDirectory(new File(initialDirectory));
-        fileChooser.getExtensionFilters().clear();
-        for (FileChooser.ExtensionFilter filter : filters) fileChooser.setSelectedExtensionFilter(filter);
-        return fileChooser.showSaveDialog(window);
-    }
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // initialize options
-        parser = new DefaultParser();
         options = new Options();
-
         options.addOption(new Option("v", "verbose", false, "be verbose"));
         options.addOption(new Option("a", "arp", false, "display arp packets"));
         options.addOption(new Option("d", "application-layer", false, "dump the application layer"));
@@ -270,7 +251,7 @@ public class SnortController implements Initializable {
             }
         });
         logToDirectoryFindButton.setOnAction(event -> {
-            File choosedDirectory = chooseDirectory(logToDirectoryFindButton.getScene().getWindow());
+            File choosedDirectory = openDirectory(logToDirectoryFindButton.getScene().getWindow());
             if(choosedDirectory.exists() && choosedDirectory.isDirectory()){
                 logToDirectoryTextField.setText(choosedDirectory.getAbsolutePath());
                 logToDirectoryApplyButton.fire();
@@ -391,52 +372,237 @@ public class SnortController implements Initializable {
 
 
         // GENERAL CONFIGURATIONS TAB.
+
         // network variables
+        MenuItem networkVariablesEditMenuItem = new MenuItem("Edit");
+        MenuItem networkVariablesRemoveMenuItem = new MenuItem("Remove");
+        networkVariablesEditMenuItem.setOnAction(event -> {
+            Stage stage = new Stage(StageStyle.DECORATED);
+            NetworkVariable selectedItem = networkVariablesTableView.getSelectionModel().getSelectedItem();
+            ChoiceBox<String> typeChoiceBox = new ChoiceBox<>(FXCollections.observableArrayList("ipvar", "portvar", "var"));
+            TextField nameField = new TextField(selectedItem.getName());
+            TextField valueField = new TextField(selectedItem.getValue());
+            VBox container = new VBox(10);
+            Button saveButton = new Button("Save");
+            Button closeButton = new Button("Close");
+
+            saveButton.setOnAction(e ->{
+                selectedItem.setType(typeChoiceBox.getValue());
+                selectedItem.setName(nameField.getText());
+                selectedItem.setValue(valueField.getText());
+                // TODO: how to use listener on this?
+                networkVariablesTableView.refresh();
+            });
+
+            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+            // it's better not to close this window because.. if you want to add multiple variables?
+            typeChoiceBox.getSelectionModel().select(selectedItem.getType());
+            container.setPadding(new Insets(10));
+            container.getChildren().addAll(new Label("Type"), typeChoiceBox, new Label("Name"), nameField,
+                    new Label("Value"), valueField, new HBox(10, saveButton, closeButton));
+            stage.setScene(new Scene(container));
+            stage.initOwner(networkVariablesTableView.getScene().getWindow());
+            stage.setAlwaysOnTop(true);
+            stage.show();
+        });
+        networkVariablesRemoveMenuItem.setOnAction(event -> networkVariablesTableView.getItems().remove(networkVariablesTableView.getSelectionModel().getSelectedItem()));
+        networkVariablesTableView.setContextMenu(new ContextMenu(networkVariablesEditMenuItem, networkVariablesRemoveMenuItem));
+
         networkVariableTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
         networkVariableNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         networkVariableValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        networkVariableTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        networkVariableNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        networkVariableValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
         // network decoders
+        MenuItem networkDecodersEditMenuItem = new MenuItem("Edit");
+        MenuItem networkDecodersRemoveMenuItem = new MenuItem("Remove");
+        networkDecodersEditMenuItem.setOnAction(event -> {
+            Stage stage = new Stage(StageStyle.DECORATED);
+            NetworkDecoder selectedItem = networkDecodersTableView.getSelectionModel().getSelectedItem();
+            TextField keywordField = new TextField("config");
+            TextField nameField = new TextField(selectedItem.getName());
+            TextField valueField = new TextField(selectedItem.getValue());
+            VBox container = new VBox(10);
+            Button saveButton = new Button("Save");
+            Button closeButton = new Button("Close");
+
+            saveButton.setOnAction(e ->{
+                selectedItem.setKeyword(keywordField.getText());
+                selectedItem.setName(nameField.getText());
+                selectedItem.setValue(valueField.getText());
+                networkDecodersTableView.refresh();
+            });
+
+            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+            // it's better not to close this window because.. if you want to add multiple variables?
+            keywordField.setEditable(false);
+            container.setPadding(new Insets(10));
+            container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Name"), nameField,
+                    new Label("Value"), valueField, new HBox(10, saveButton, closeButton));
+            stage.setScene(new Scene(container));
+            stage.initOwner(networkDecodersTableView.getScene().getWindow());
+            stage.setAlwaysOnTop(true);
+            stage.show();
+        });
+        networkDecodersRemoveMenuItem.setOnAction(event -> networkDecodersTableView.getItems().remove(networkDecodersTableView.getSelectionModel().getSelectedItem()));
+        networkDecodersTableView.setContextMenu(new ContextMenu(networkDecodersEditMenuItem, networkDecodersRemoveMenuItem));
+
         networkDecoderKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         networkDecoderNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         networkDecoderValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        networkDecoderKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        networkDecoderNameTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        networkDecoderValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
         // dynamic modules
+        MenuItem dynamicModulesEditMenuItem = new MenuItem("Edit");
+        MenuItem dynamicModulesRemoveMenuItem = new MenuItem("Remove");
+        dynamicModulesEditMenuItem.setOnAction(event -> {
+            Stage stage = new Stage(StageStyle.DECORATED);
+            DynamicModule selectedItem = dynamicModulesTableView.getSelectionModel().getSelectedItem();
+            ChoiceBox<String> typeChoiceBox = new ChoiceBox<>(FXCollections.observableArrayList("dynamicpreprocessor", "dynamicengine", "dynamicdetection"));
+            ChoiceBox<String> valueTypeChoiceBox = new ChoiceBox<>(FXCollections.observableArrayList("directory", "file"));
+            TextField valueField = new TextField(selectedItem.getValue());
+            VBox container = new VBox(10);
+            Button saveButton = new Button("Save");
+            Button closeButton = new Button("Close");
+
+            saveButton.setOnAction(e ->{
+                selectedItem.setModuleType(typeChoiceBox.getValue());
+                selectedItem.setValueType(valueTypeChoiceBox.getValue());
+                selectedItem.setValue(valueField.getText());
+                dynamicModulesTableView.refresh();
+            });
+
+            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+            // it's better not to close this window because.. if you want to add multiple variables?
+            typeChoiceBox.getSelectionModel().select(selectedItem.getModuleType());
+            valueTypeChoiceBox.getSelectionModel().select(selectedItem.getValueType());
+            container.setPadding(new Insets(10));
+            container.getChildren().addAll(new Label("Module Type"), typeChoiceBox, new Label("Value Type"), valueTypeChoiceBox,
+                    new Label("Value"), valueField, new HBox(10, saveButton, closeButton));
+            stage.setScene(new Scene(container));
+            stage.initOwner(dynamicModulesTableView.getScene().getWindow());
+            stage.setAlwaysOnTop(true);
+            stage.show();
+        });
+        dynamicModulesRemoveMenuItem.setOnAction(event -> dynamicModulesTableView.getItems().remove(dynamicModulesTableView.getSelectionModel().getSelectedItem()));
+        dynamicModulesTableView.setContextMenu(new ContextMenu(dynamicModulesEditMenuItem, dynamicModulesRemoveMenuItem));
+
         dynamicModuleTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("moduleType"));
         dynamicModuleValueTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("valueType"));
         dynamicModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        dynamicModuleTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        dynamicModuleValueTypeTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        dynamicModuleValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
         // preprocessors
+        MenuItem preprocessorsEditMenuItem = new MenuItem("Edit");
+        MenuItem preprocessorsRemoveMenuItem = new MenuItem("Remove");
+        preprocessorsEditMenuItem.setOnAction(event -> {
+            Stage stage = new Stage(StageStyle.DECORATED);
+            Preprocessor selectedItem = preprocessorTableView.getSelectionModel().getSelectedItem();
+            TextField keywordField = new TextField(selectedItem.getKeyword());
+            TextField optionNameField = new TextField(selectedItem.getOption());
+            TextField optionValueField = new TextField(selectedItem.getValue());
+            VBox container = new VBox(10);
+            Button saveButton = new Button("Save");
+            Button closeButton = new Button("Close");
+
+            saveButton.setOnAction(e ->{
+                selectedItem.setKeyword(keywordField.getText());
+                selectedItem.setOption(optionNameField.getText());
+                selectedItem.setValue(optionValueField.getText());
+                preprocessorTableView.refresh();
+            });
+
+            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+            // it's better not to close this window because.. if you want to add multiple variables?
+            keywordField.setEditable(false);
+            container.setPadding(new Insets(10));
+            container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Option"), optionNameField,
+                    new Label("Value"), optionValueField, new HBox(10, saveButton, closeButton));
+            stage.setScene(new Scene(container));
+            stage.initOwner(preprocessorTableView.getScene().getWindow());
+            stage.setAlwaysOnTop(true);
+            stage.show();
+        });
+        preprocessorsRemoveMenuItem.setOnAction(event -> preprocessorTableView.getItems().remove(preprocessorTableView.getSelectionModel().getSelectedItem()));
+        preprocessorTableView.setContextMenu(new ContextMenu(preprocessorsEditMenuItem, preprocessorsRemoveMenuItem));
+
         preprocessorKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         preprocessorOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
         preprocessorValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        preprocessorKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        preprocessorOptionTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        preprocessorValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
         // output modules
+        MenuItem outputModulesEditMenuItem = new MenuItem("Edit");
+        MenuItem outputModulesRemoveMenuItem = new MenuItem("Remove");
+        outputModulesEditMenuItem.setOnAction(event -> {
+            Stage stage = new Stage(StageStyle.DECORATED);
+            OutputModule selectedItem = outputModuleTableView.getSelectionModel().getSelectedItem();
+            TextField keywordField = new TextField("output");
+            TextField optionNameField = new TextField(selectedItem.getOption());
+            TextField optionValueField = new TextField(selectedItem.getValue());
+            VBox container = new VBox(10);
+            Button saveButton = new Button("Save");
+            Button closeButton = new Button("Close");
+
+            saveButton.setOnAction(e ->{
+                selectedItem.setKeyword(keywordField.getText());
+                selectedItem.setOption(optionNameField.getText());
+                selectedItem.setValue(optionValueField.getText());
+                outputModuleTableView.refresh();
+            });
+
+            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+            // it's better not to close this window because.. if you want to add multiple variables?
+            keywordField.setEditable(false);
+            container.setPadding(new Insets(10));
+            container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Option"), optionNameField,
+                    new Label("Value"), optionValueField, new HBox(10, saveButton, closeButton));
+            stage.setScene(new Scene(container));
+            stage.initOwner(outputModuleTableView.getScene().getWindow());
+            stage.setAlwaysOnTop(true);
+            stage.show();
+        });
+        outputModulesRemoveMenuItem.setOnAction(event -> outputModuleTableView.getItems().remove(outputModuleTableView.getSelectionModel().getSelectedItem()));
+        outputModuleTableView.setContextMenu(new ContextMenu(outputModulesEditMenuItem, outputModulesRemoveMenuItem));
+
         outputModuleKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         outputModuleOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
         outputModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        outputModuleKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        outputModuleOptionTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        outputModuleValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-
         // file inclusions
+        MenuItem inclusionsEditMenuItem = new MenuItem("Edit");
+        MenuItem inclusionsRemoveMenuItem = new MenuItem("Remove");
+        inclusionsEditMenuItem.setOnAction(event -> {
+            Stage stage = new Stage(StageStyle.DECORATED);
+            Inclusion selectedItem = inclusionTableView.getSelectionModel().getSelectedItem();
+            TextField keywordField = new TextField("include");
+            TextField valueField = new TextField(selectedItem.getValue());
+            VBox container = new VBox(10);
+            Button saveButton = new Button("Save");
+            Button closeButton = new Button("Close");
+
+            saveButton.setOnAction(e ->{
+                selectedItem.setKeyword(keywordField.getText());
+                selectedItem.setValue(valueField.getText());
+                inclusionTableView.refresh();
+            });
+
+            closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+            // it's better not to close this window because.. if you want to add multiple variables?
+            keywordField.setEditable(false);
+            container.setPadding(new Insets(10));
+            container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Value"), valueField,
+                    new HBox(10, saveButton, closeButton));
+            stage.setScene(new Scene(container));
+            stage.initOwner(inclusionTableView.getScene().getWindow());
+            stage.setAlwaysOnTop(true);
+            stage.show();
+        });
+        inclusionsRemoveMenuItem.setOnAction(event -> inclusionTableView.getItems().remove(inclusionTableView.getSelectionModel().getSelectedItem()));
+        inclusionTableView.setContextMenu(new ContextMenu(inclusionsEditMenuItem, inclusionsRemoveMenuItem));
+
         inclusionKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         inclusionValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
 
@@ -485,7 +651,7 @@ public class SnortController implements Initializable {
                 // parse run command options
                 CommandLine cmd;
                 try {
-                    cmd = parser.parse(options, s.split(" "));
+                    cmd = new DefaultParser().parse(options, s.split(" "));
                 } catch (ParseException e) {
                     e.printStackTrace();
                     return;
@@ -612,13 +778,6 @@ public class SnortController implements Initializable {
                 e.printStackTrace();
             }
 
-            networkVariablesTableView.itemsProperty().addListener((observable, oldValue, newValue) -> networkVariablesTableView.refresh());
-            networkDecodersTableView.itemsProperty().addListener((observable, oldValue, newValue) -> networkDecodersTableView.refresh());
-            dynamicModulesTableView.itemsProperty().addListener((observable, oldValue, newValue) -> dynamicModulesTableView.refresh());
-            preprocessorTableView.itemsProperty().addListener((observable, oldValue, newValue) -> preprocessorTableView.refresh());
-            outputModuleTableView.itemsProperty().addListener((observable, oldValue, newValue) -> outputModuleTableView.refresh());
-            inclusionTableView.itemsProperty().addListener((observable, oldValue, newValue) -> inclusionTableView.refresh());
-
             Platform.runLater(() -> {
                 generalConfigurationsToolBar.getChildrenUnmodifiable().forEach(node -> node.setDisable(false));
                 networkVariablesTableView.setDisable(false);
@@ -633,10 +792,29 @@ public class SnortController implements Initializable {
     }
 
     // network variables button handlers
-    // TODO: implement here
     @FXML
     private void onClickAddNetworkVariablesButton(ActionEvent event){
+        Stage stage = new Stage(StageStyle.DECORATED);
+        ChoiceBox<String> choiceBox = new ChoiceBox<>(FXCollections.observableArrayList("ipvar", "portvar", "var"));
+        TextField nameField = new TextField();
+        TextField valueField = new TextField();
+        VBox container = new VBox(10);
+        Button addButton = new Button("Add");
+        Button closeButton = new Button("Close");
 
+        addButton.setOnAction(e -> networkVariablesTableView.getItems().add(new NetworkVariable(choiceBox.getValue(), nameField.getText(), valueField.getText())));
+
+        closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+        // it's better not to close this window because.. if you want to add multiple variables?
+        choiceBox.getSelectionModel().select(0);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(new Label("Type"), choiceBox, new Label("Name"), nameField,
+                new Label("Value"), valueField, new HBox(10, addButton, closeButton));
+        stage.setScene(new Scene(container));
+        stage.initOwner(((Button)event.getSource()).getScene().getWindow());
+        stage.setAlwaysOnTop(true);
+        stage.show();
     }
     @FXML
     private void onClickResetNetworkVariablesButton(){
@@ -654,9 +832,29 @@ public class SnortController implements Initializable {
     }
 
     // network decoders button handlers
-    @FXML  // TODO: implement here
+    @FXML
     private void onClickAddNetworkDecodersButton(ActionEvent event){
+        Stage stage = new Stage(StageStyle.DECORATED);
+        TextField keywordField = new TextField("config");
+        TextField nameField = new TextField();
+        TextField valueField = new TextField();
+        VBox container = new VBox(10);
+        Button addButton = new Button("Add");
+        Button closeButton = new Button("Close");
 
+        addButton.setOnAction(e -> networkDecodersTableView.getItems().add(new NetworkDecoder(keywordField.getText(), nameField.getText(), valueField.getText())));
+
+        closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+        // it's better not to close this window because.. if you want to add multiple variables?
+        keywordField.setEditable(false);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Name"), nameField,
+                new Label("Value"), valueField, new HBox(10, addButton, closeButton));
+        stage.setScene(new Scene(container));
+        stage.initOwner(((Button)event.getSource()).getScene().getWindow());
+        stage.setAlwaysOnTop(true);
+        stage.show();
     }
     @FXML
     private void onClickResetNetworkDecodersButton(){
@@ -671,9 +869,30 @@ public class SnortController implements Initializable {
     }
 
     // dynamic modules button handlers
-    @FXML // TODO: implement here
+    @FXML
     private void onClickAddDynamicModulesButton(ActionEvent event){
+        Stage stage = new Stage(StageStyle.DECORATED);
+        ChoiceBox<String> typeChoiceBox = new ChoiceBox<>(FXCollections.observableArrayList("dynamicpreprocessor", "dynamicengine", "dynamicdetection"));
+        ChoiceBox<String> valueTypeChoiceBox = new ChoiceBox<>(FXCollections.observableArrayList("directory", "file"));
+        TextField valueField = new TextField();
+        VBox container = new VBox(10);
+        Button addButton = new Button("Add");
+        Button closeButton = new Button("Close");
 
+        addButton.setOnAction(e -> dynamicModulesTableView.getItems().add(new DynamicModule(typeChoiceBox.getValue(), valueTypeChoiceBox.getValue(), valueField.getText())));
+
+        closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+        // it's better not to close this window because.. if you want to add multiple variables?
+        typeChoiceBox.getSelectionModel().select(0);
+        valueTypeChoiceBox.getSelectionModel().select(0);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(new Label("Module Type"), typeChoiceBox, new Label("Value Type"), valueTypeChoiceBox,
+                new Label("Value"), valueField, new HBox(10, addButton, closeButton));
+        stage.setScene(new Scene(container));
+        stage.initOwner(((Button)event.getSource()).getScene().getWindow());
+        stage.setAlwaysOnTop(true);
+        stage.show();
     }
     @FXML
     private void onClickResetDynamicModulesButton(){
@@ -688,9 +907,29 @@ public class SnortController implements Initializable {
     }
 
     // preprocessors button handlers
-    @FXML // TODO: implement here
+    @FXML
     private void onClickAddPreprocessorsButton(ActionEvent event){
+        Stage stage = new Stage(StageStyle.DECORATED);
+        TextField keywordField = new TextField("preprocessor");
+        TextField optionNameField = new TextField();
+        TextField optionValueField = new TextField();
+        VBox container = new VBox(10);
+        Button addButton = new Button("Add");
+        Button closeButton = new Button("Close");
 
+        addButton.setOnAction(e -> preprocessorTableView.getItems().add(new Preprocessor(keywordField.getText(), optionNameField.getText(), optionValueField.getText())));
+
+        closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+        // it's better not to close this window because.. if you want to add multiple variables?
+        keywordField.setEditable(false);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Option"), optionNameField,
+                new Label("Value"), optionValueField, new HBox(10, addButton, closeButton));
+        stage.setScene(new Scene(container));
+        stage.initOwner(((Button)event.getSource()).getScene().getWindow());
+        stage.setAlwaysOnTop(true);
+        stage.show();
     }
     @FXML
     private void onClickResetPreprocessorsButton(){
@@ -705,9 +944,29 @@ public class SnortController implements Initializable {
     }
 
     // output modules button handlers
-    @FXML // TODO: implement here
+    @FXML
     private void onClickAddOutputModulesButton(ActionEvent event){
+        Stage stage = new Stage(StageStyle.DECORATED);
+        TextField keywordField = new TextField("output");
+        TextField optionNameField = new TextField();
+        TextField optionValueField = new TextField();
+        VBox container = new VBox(10);
+        Button addButton = new Button("Add");
+        Button closeButton = new Button("Close");
 
+        addButton.setOnAction(e -> outputModuleTableView.getItems().add(new OutputModule(keywordField.getText(), optionNameField.getText(), optionValueField.getText())));
+
+        closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+        // it's better not to close this window because.. if you want to add multiple variables?
+        keywordField.setEditable(false);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Option"), optionNameField,
+                new Label("Value"), optionValueField, new HBox(10, addButton, closeButton));
+        stage.setScene(new Scene(container));
+        stage.initOwner(((Button)event.getSource()).getScene().getWindow());
+        stage.setAlwaysOnTop(true);
+        stage.show();
     }
     @FXML
     private void onClickResetOutputModulesButton(){
@@ -722,9 +981,28 @@ public class SnortController implements Initializable {
     }
 
     // inclusion button handlers
-    @FXML // TODO: implement here
+    @FXML
     private void onClickAddInclusionButton(ActionEvent event){
+        Stage stage = new Stage(StageStyle.DECORATED);
+        TextField keywordField = new TextField("include");
+        TextField optionValueField = new TextField();
+        VBox container = new VBox(10);
+        Button addButton = new Button("Add");
+        Button closeButton = new Button("Close");
 
+        addButton.setOnAction(e -> inclusionTableView.getItems().add(new Inclusion(keywordField.getText(), optionValueField.getText())));
+
+        closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
+
+        // it's better not to close this window because.. if you want to add multiple variables?
+        keywordField.setEditable(false);
+        container.setPadding(new Insets(10));
+        container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Value"), optionValueField,
+                new HBox(10, addButton, closeButton));
+        stage.setScene(new Scene(container));
+        stage.initOwner(((Button)event.getSource()).getScene().getWindow());
+        stage.setAlwaysOnTop(true);
+        stage.show();
     }
     @FXML
     private void onClickResetInclusionButton(){
@@ -778,7 +1056,7 @@ public class SnortController implements Initializable {
     private void onEditCommitDynamicModuleTypeColumn(TableColumn.CellEditEvent<DynamicModule, String> event){
         DynamicModule dynamicModule = event.getTableView().getSelectionModel().getSelectedItem();
         dynamicModule.setModuleType(event.getNewValue());
-    };
+    }
     @FXML
     private void onEditCommitDynamicModuleValueTypeColumn(TableColumn.CellEditEvent<DynamicModule, String> event){
         DynamicModule dynamicModule = event.getTableView().getSelectionModel().getSelectedItem();
