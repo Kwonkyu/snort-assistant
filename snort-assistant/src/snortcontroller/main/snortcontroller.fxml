@@ -169,6 +169,7 @@
                         <TextField fx:id="snortConfigurationFileLocationTextField" prefWidth="300.0" promptText="location of snort.conf" text="/etc/snort/snort.conf" />
                       <Button fx:id="findConfigurationFileButton" mnemonicParsing="false" onAction="#onClickFindConfigurationFileButton" text="Find" />
                         <Button fx:id="openConfigurationFileButton" layoutX="314.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickOpenConfigurationFileButton" text="Open" />
+                        <Button mnemonicParsing="false" onAction="#onClickSaveConfigurationFileButton" text="Save" />
                     </items>
                   </ToolBar>
                </top>
