@@ -3,6 +3,8 @@ package snortcontroller.main;
 import javafx.application.Platform;
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.SimpleMapProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
@@ -13,7 +15,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -155,7 +156,7 @@ public class SnortController implements Initializable {
     ArrayList<Inclusion> parsedInclusions;
 
     Options options = null;
-
+    StringProperty selectedItemInformation = new SimpleStringProperty();
     ExecutorService service = SingleThreadExecutorSingleton.getService();
 
     enum AlertMode {
@@ -373,7 +374,11 @@ public class SnortController implements Initializable {
         etcResetButton.setOnAction(event -> interfaceCheckBox.setSelected(false));
 
 
+
+
         // GENERAL CONFIGURATIONS TAB.
+        // textarea binding
+        selectedItemInformationTextArea.textProperty().bind(selectedItemInformation);
 
         // network variables
         MenuItem networkVariablesEditMenuItem = new MenuItem("Edit");
@@ -389,6 +394,24 @@ public class SnortController implements Initializable {
             Button closeButton = new Button("Close");
 
             saveButton.setOnAction(e ->{
+                if(nameField.getText().isBlank()){
+                    nameField.requestFocus();
+                    return;
+                }
+                if(valueField.getText().isBlank()){
+                    valueField.requestFocus();
+                    return;
+                }
+
+                if(!selectedItem.getName().equals(nameField.getText())){
+                    for(var item: networkVariablesTableView.getItems()){
+                        if(item.getName().equals(nameField.getText())){
+                            showAlert(Alert.AlertType.ERROR, String.format("Variable %s is already exist.", nameField.getText()));
+                            return;
+                        }
+                    }
+                }
+
                 selectedItem.setType(typeChoiceBox.getValue());
                 selectedItem.setName(nameField.getText());
                 selectedItem.setValue(valueField.getText());
@@ -412,16 +435,20 @@ public class SnortController implements Initializable {
         networkVariablesTableView.setContextMenu(new ContextMenu(networkVariablesEditMenuItem, networkVariablesRemoveMenuItem));
 
         networkVariablesTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue == null) return;
             String info = "Network Variables.\n\n" +
                     String.format("Variable Type: %s\n", newValue.getType()) +
                     String.format("Variable Name: %s\n", newValue.getName()) +
                     String.format("Variable Value: %s\n", newValue.getValue());
-            selectedItemInformationTextArea.setText(info);
+            selectedItemInformation.set(info);
+            //selectedItemInformationTextArea.setText(info);
         });
 
         networkVariableTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
         networkVariableNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         networkVariableValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+
 
         // network decoders
         MenuItem networkDecodersEditMenuItem = new MenuItem("Edit");
@@ -437,6 +464,28 @@ public class SnortController implements Initializable {
             Button closeButton = new Button("Close");
 
             saveButton.setOnAction(e ->{
+                if(nameField.getText().isBlank()){
+                    nameField.requestFocus();
+                    return;
+                }
+
+                if(nameField.getText().endsWith(":") && valueField.getText().isBlank()){
+                    nameField.setText(nameField.getText().substring(0, nameField.getText().length()-1));
+                }
+
+                if(!nameField.getText().endsWith(":") && !valueField.getText().isBlank()){
+                    nameField.setText(String.format("%s:", nameField.getText()));
+                }
+
+                if(!selectedItem.getName().equals(nameField.getText())){
+                    for(var item: networkDecodersTableView.getItems()){
+                        if(item.getName().equals(nameField.getText())){
+                            showAlert(Alert.AlertType.ERROR, String.format("Decoder %s is already exist.", nameField.getText()));
+                            return;
+                        }
+                    }
+                }
+
                 selectedItem.setKeyword(keywordField.getText());
                 selectedItem.setName(nameField.getText());
                 selectedItem.setValue(valueField.getText());
@@ -459,16 +508,19 @@ public class SnortController implements Initializable {
         networkDecodersTableView.setContextMenu(new ContextMenu(networkDecodersEditMenuItem, networkDecodersRemoveMenuItem));
 
         networkDecodersTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue == null) return;
             String info = "Network Decoders.\n\n" +
                     String.format("Decoder Keyword: %s\n", newValue.getKeyword()) +
                     String.format("Decoder Name: %s\n", newValue.getName()) +
                     String.format("Decoder Value: %s\n", newValue.getValue());
-            selectedItemInformationTextArea.setText(info);
+            selectedItemInformation.set(info);
         });
 
         networkDecoderKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         networkDecoderNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         networkDecoderValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+
 
         // dynamic modules
         MenuItem dynamicModulesEditMenuItem = new MenuItem("Edit");
@@ -484,6 +536,20 @@ public class SnortController implements Initializable {
             Button closeButton = new Button("Close");
 
             saveButton.setOnAction(e ->{
+                if(valueField.getText().isBlank()){
+                    valueField.requestFocus();
+                    return;
+                }
+
+                if(!selectedItem.getValue().equals(valueField.getText())){
+                    for(var item: dynamicModulesTableView.getItems()){
+                        if(item.getValue().equals(valueField.getText())){
+                            showAlert(Alert.AlertType.ERROR, String.format("Module %s is already exist.", valueField.getText()));
+                            return;
+                        }
+                    }
+                }
+
                 selectedItem.setModuleType(typeChoiceBox.getValue());
                 selectedItem.setValueType(valueTypeChoiceBox.getValue());
                 selectedItem.setValue(valueField.getText());
@@ -507,16 +573,19 @@ public class SnortController implements Initializable {
         dynamicModulesTableView.setContextMenu(new ContextMenu(dynamicModulesEditMenuItem, dynamicModulesRemoveMenuItem));
 
         dynamicModulesTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue == null) return;
             String info = "Dynamic Modules.\n\n" +
                     String.format("Module Type: %s\n", newValue.getModuleType()) +
                     String.format("Value Type: %s\n", newValue.getValueType()) +
                     String.format("Module Values: %s\n", newValue.getValue());
-            selectedItemInformationTextArea.setText(info);
+            selectedItemInformation.set(info);
         });
 
         dynamicModuleTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("moduleType"));
         dynamicModuleValueTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("valueType"));
         dynamicModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+
 
         // preprocessors
         MenuItem preprocessorsEditMenuItem = new MenuItem("Edit");
@@ -532,6 +601,28 @@ public class SnortController implements Initializable {
             Button closeButton = new Button("Close");
 
             saveButton.setOnAction(e ->{
+                if(optionNameField.getText().isBlank()){
+                    optionNameField.requestFocus();
+                    return;
+                }
+
+                if(optionNameField.getText().endsWith(":") && optionValueField.getText().isBlank()){
+                    optionNameField.setText(optionNameField.getText().substring(0, optionNameField.getText().length()-1));
+                }
+
+                if(!optionNameField.getText().endsWith(":") && !optionValueField.getText().isBlank()){
+                    optionNameField.setText(String.format("%s:", optionNameField.getText()));
+                }
+
+                if(!selectedItem.getOption().equals(optionNameField.getText())){
+                    for(var item: preprocessorTableView.getItems()){
+                        if(item.getOption().equals(optionNameField.getText())){
+                            showAlert(Alert.AlertType.ERROR, String.format("Preprocessor %s is already exist.", optionNameField.getText()));
+                            return;
+                        }
+                    }
+                }
+
                 selectedItem.setKeyword(keywordField.getText());
                 selectedItem.setOption(optionNameField.getText());
                 selectedItem.setValue(optionValueField.getText());
@@ -554,16 +645,34 @@ public class SnortController implements Initializable {
         preprocessorTableView.setContextMenu(new ContextMenu(preprocessorsEditMenuItem, preprocessorsRemoveMenuItem));
 
         preprocessorTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            String info = "Preprocessors.\n\n" +
-                    String.format("Preprocessor Keyword: %s\n", newValue.getKeyword()) +
-                    String.format("Preprocessor Option: %s\n", newValue.getOption()) +
-                    String.format("Preprocessor Option Values: %s\n", newValue.getValue());
-            selectedItemInformationTextArea.setText(info);
+            if(newValue == null) return;
+            StringBuilder info = new StringBuilder();
+            info.append("Preprocessors.\n\n");
+            info.append(String.format("Preprocessor Keyword: %s\n", newValue.getKeyword()));
+            info.append(String.format("Preprocessor Option: %s\n", newValue.getOption()));
+            info.append("Preprocessor Values: ");
+
+            if(!newValue.getValue().isBlank()){
+                String[] values = newValue.getValue().split(Pattern.quote("\\"));
+                for(int i=0;i<values.length;i++){
+                    info.append(values[i]);
+                    if(i < values.length - 1){
+                        info.append(" \\ \n\t\t");
+                    } else {
+                        info.append("\n");
+                    }
+                }
+            } else {
+                info.append("\n");
+            }
+            selectedItemInformation.set(info.toString());
         });
 
         preprocessorKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         preprocessorOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
         preprocessorValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+
 
         // output modules
         MenuItem outputModulesEditMenuItem = new MenuItem("Edit");
@@ -579,6 +688,28 @@ public class SnortController implements Initializable {
             Button closeButton = new Button("Close");
 
             saveButton.setOnAction(e ->{
+                if(optionNameField.getText().isBlank()){
+                    optionNameField.requestFocus();
+                    return;
+                }
+
+                if(optionNameField.getText().endsWith(":") && optionValueField.getText().isBlank()){
+                    optionNameField.setText(optionNameField.getText().substring(0, optionNameField.getText().length()-1));
+                }
+
+                if(!optionNameField.getText().endsWith(":") && !optionValueField.getText().isBlank()){
+                    optionNameField.setText(String.format("%s:", optionNameField.getText()));
+                }
+
+                if(!selectedItem.getOption().equals(optionNameField.getText())){
+                    for(var item: outputModuleTableView.getItems()){
+                        if(item.getOption().equals(optionNameField.getText())){
+                            showAlert(Alert.AlertType.ERROR, String.format("Module %s is already exist.", optionNameField.getText()));
+                            return;
+                        }
+                    }
+                }
+
                 selectedItem.setKeyword(keywordField.getText());
                 selectedItem.setOption(optionNameField.getText());
                 selectedItem.setValue(optionValueField.getText());
@@ -601,16 +732,19 @@ public class SnortController implements Initializable {
         outputModuleTableView.setContextMenu(new ContextMenu(outputModulesEditMenuItem, outputModulesRemoveMenuItem));
 
         outputModuleTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue == null) return;
             String info = "Output Modules.\n\n" +
                     String.format("Module Keyword: %s\n", newValue.getKeyword()) +
                     String.format("Module Option: %s\n", newValue.getOption()) +
                     String.format("Module Values: %s\n", newValue.getValue());
-            selectedItemInformationTextArea.setText(info);
+            selectedItemInformation.set(info);
         });
 
         outputModuleKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         outputModuleOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
         outputModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+
 
         // file inclusions
         MenuItem inclusionsEditMenuItem = new MenuItem("Edit");
@@ -625,6 +759,20 @@ public class SnortController implements Initializable {
             Button closeButton = new Button("Close");
 
             saveButton.setOnAction(e ->{
+                if(valueField.getText().isBlank()){
+                    valueField.requestFocus();
+                    return;
+                }
+
+                if(!selectedItem.getValue().equals(valueField.getText())){
+                    for(var item: inclusionTableView.getItems()){
+                        if(item.getValue().equals(valueField.getText())){
+                            showAlert(Alert.AlertType.ERROR, String.format("File %s is already included.", valueField.getText()));
+                            return;
+                        }
+                    }
+                }
+
                 selectedItem.setKeyword(keywordField.getText());
                 selectedItem.setValue(valueField.getText());
                 inclusionTableView.refresh();
@@ -646,10 +794,11 @@ public class SnortController implements Initializable {
         inclusionTableView.setContextMenu(new ContextMenu(inclusionsEditMenuItem, inclusionsRemoveMenuItem));
 
         inclusionTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if(newValue == null) return;
             String info = "File Inclusions.\n\n" +
                     String.format("Inclusion Keyword: %s\n", newValue.getKeyword()) +
                     String.format("Inclusion Value: %s\n", newValue.getValue());
-            selectedItemInformationTextArea.setText(info);
+            selectedItemInformation.set(info);
         });
 
         inclusionKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
@@ -928,7 +1077,26 @@ public class SnortController implements Initializable {
         Button addButton = new Button("Add");
         Button closeButton = new Button("Close");
 
-        addButton.setOnAction(e -> networkVariablesTableView.getItems().add(new NetworkVariable(choiceBox.getValue(), nameField.getText(), valueField.getText())));
+        addButton.setOnAction(e -> {
+            if(nameField.getText().isBlank()){
+                nameField.requestFocus();
+                return;
+            }
+
+            if(valueField.getText().isBlank()) {
+                valueField.requestFocus();
+                return;
+            }
+
+            for(var item: networkVariablesTableView.getItems()){
+                if(item.getName().equals(nameField.getText())){
+                    showAlert(Alert.AlertType.ERROR, String.format("Variable %s is already exist.", nameField.getText()));
+                    return;
+                }
+            }
+
+            networkVariablesTableView.getItems().add(new NetworkVariable(choiceBox.getValue(), nameField.getText(), valueField.getText()));
+        });
 
         closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
 
@@ -945,6 +1113,7 @@ public class SnortController implements Initializable {
     @FXML
     private void onClickResetNetworkVariablesButton(){
         networkVariablesTableView.getItems().clear();
+        if(parsedNetworkVariables == null) return;
         parsedNetworkVariables.forEach(networkVariable -> networkVariablesTableView.getItems().add(networkVariable.copy()));
         // binding direction editedNetworkVariables to tableview's observable list? changes are applied to data structure
         // but not towards observable list. maybe setItems() event should happen.
@@ -968,7 +1137,29 @@ public class SnortController implements Initializable {
         Button addButton = new Button("Add");
         Button closeButton = new Button("Close");
 
-        addButton.setOnAction(e -> networkDecodersTableView.getItems().add(new NetworkDecoder(keywordField.getText(), nameField.getText(), valueField.getText())));
+        addButton.setOnAction(e -> {
+            if(nameField.getText().isBlank()){
+                nameField.requestFocus();
+                return;
+            }
+
+            if(nameField.getText().endsWith(":") && valueField.getText().isBlank()){
+                nameField.setText(nameField.getText().substring(0, nameField.getText().length()-1));
+            }
+
+            if(!nameField.getText().endsWith(":") && !valueField.getText().isBlank()){
+                nameField.setText(String.format("%s:", nameField.getText()));
+            }
+
+            for(var item: networkDecodersTableView.getItems()){
+                if(item.getName().equals(nameField.getText())){
+                    showAlert(Alert.AlertType.ERROR, String.format("Decoder %s is already exist.", nameField.getText()));
+                    return;
+                }
+            }
+
+            networkDecodersTableView.getItems().add(new NetworkDecoder(keywordField.getText(), nameField.getText(), valueField.getText()));
+        });
 
         closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
 
@@ -985,6 +1176,7 @@ public class SnortController implements Initializable {
     @FXML
     private void onClickResetNetworkDecodersButton(){
         networkDecodersTableView.getItems().clear();
+        if(parsedNetworkDecoders == null) return;
         parsedNetworkDecoders.forEach(networkDecoder -> networkDecodersTableView.getItems().add(networkDecoder.copy()));
     }
     @FXML
@@ -1005,7 +1197,21 @@ public class SnortController implements Initializable {
         Button addButton = new Button("Add");
         Button closeButton = new Button("Close");
 
-        addButton.setOnAction(e -> dynamicModulesTableView.getItems().add(new DynamicModule(typeChoiceBox.getValue(), valueTypeChoiceBox.getValue(), valueField.getText())));
+        addButton.setOnAction(e -> {
+            if(valueField.getText().isBlank()){
+                valueField.requestFocus();
+                return;
+            }
+
+            for(var item: dynamicModulesTableView.getItems()){
+                if(item.getValue().equals(valueField.getText())){
+                    showAlert(Alert.AlertType.ERROR, String.format("Module %s is already exist.", valueField.getText()));
+                    return;
+                }
+            }
+
+            dynamicModulesTableView.getItems().add(new DynamicModule(typeChoiceBox.getValue(), valueTypeChoiceBox.getValue(), valueField.getText()));
+        });
 
         closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
 
@@ -1023,6 +1229,7 @@ public class SnortController implements Initializable {
     @FXML
     private void onClickResetDynamicModulesButton(){
         dynamicModulesTableView.getItems().clear();
+        if(parsedDynamicModules == null) return;
         parsedDynamicModules.forEach(dynamicModule -> dynamicModulesTableView.getItems().add(dynamicModule.copy()));
     }
     @FXML
@@ -1043,7 +1250,29 @@ public class SnortController implements Initializable {
         Button addButton = new Button("Add");
         Button closeButton = new Button("Close");
 
-        addButton.setOnAction(e -> preprocessorTableView.getItems().add(new Preprocessor(keywordField.getText(), optionNameField.getText(), optionValueField.getText())));
+        addButton.setOnAction(e -> {
+            if(optionNameField.getText().isBlank()){
+                optionNameField.requestFocus();
+                return;
+            }
+
+            if(optionNameField.getText().endsWith(":") && optionValueField.getText().isBlank()){
+                optionNameField.setText(optionNameField.getText().substring(0, optionNameField.getText().length()-1));
+            }
+
+            if(!optionNameField.getText().endsWith(":") && !optionValueField.getText().isBlank()){
+                optionNameField.setText(String.format("%s:", optionNameField.getText()));
+            }
+
+            for(var item: preprocessorTableView.getItems()){
+                if(item.getOption().equals(optionNameField.getText())){
+                    showAlert(Alert.AlertType.ERROR, String.format("Preprocessor %s is already exist.", optionNameField.getText()));
+                    return;
+                }
+            }
+
+            preprocessorTableView.getItems().add(new Preprocessor(keywordField.getText(), optionNameField.getText(), optionValueField.getText()));
+        });
 
         closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
 
@@ -1060,6 +1289,7 @@ public class SnortController implements Initializable {
     @FXML
     private void onClickResetPreprocessorsButton(){
         preprocessorTableView.getItems().clear();
+        if(parsedPreprocessors == null) return;
         parsedPreprocessors.forEach(preprocessor -> preprocessorTableView.getItems().add(preprocessor.copy()));
     }
     @FXML
@@ -1080,7 +1310,29 @@ public class SnortController implements Initializable {
         Button addButton = new Button("Add");
         Button closeButton = new Button("Close");
 
-        addButton.setOnAction(e -> outputModuleTableView.getItems().add(new OutputModule(keywordField.getText(), optionNameField.getText(), optionValueField.getText())));
+        addButton.setOnAction(e -> {
+            if(optionNameField.getText().isBlank()){
+                optionNameField.requestFocus();
+                return;
+            }
+
+            if(optionNameField.getText().endsWith(":") && optionValueField.getText().isBlank()){
+                optionNameField.setText(optionNameField.getText().substring(0, optionNameField.getText().length()-1));
+            }
+
+            if(!optionNameField.getText().endsWith(":") && !optionValueField.getText().isBlank()){
+                optionNameField.setText(String.format("%s:", optionNameField.getText()));
+            }
+
+            for(var item: outputModuleTableView.getItems()){
+                if(item.getOption().equals(optionNameField.getText())){
+                    showAlert(Alert.AlertType.ERROR, String.format("Module %s is already exist.", optionNameField.getText()));
+                    return;
+                }
+            }
+
+            outputModuleTableView.getItems().add(new OutputModule(keywordField.getText(), optionNameField.getText(), optionValueField.getText()));
+        });
 
         closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
 
@@ -1097,6 +1349,7 @@ public class SnortController implements Initializable {
     @FXML
     private void onClickResetOutputModulesButton(){
         outputModuleTableView.getItems().clear();
+        if(parsedOutputModules == null) return;
         parsedOutputModules.forEach(outputModule -> outputModuleTableView.getItems().add(outputModule.copy()));
     }
     @FXML
@@ -1111,19 +1364,33 @@ public class SnortController implements Initializable {
     private void onClickAddInclusionButton(ActionEvent event){
         Stage stage = new Stage(StageStyle.DECORATED);
         TextField keywordField = new TextField("include");
-        TextField optionValueField = new TextField();
+        TextField valueField = new TextField();
         VBox container = new VBox(10);
         Button addButton = new Button("Add");
         Button closeButton = new Button("Close");
 
-        addButton.setOnAction(e -> inclusionTableView.getItems().add(new Inclusion(keywordField.getText(), optionValueField.getText())));
+        addButton.setOnAction(e -> {
+            if(valueField.getText().isBlank()){
+                valueField.requestFocus();
+                return;
+            }
+
+            for(var item: inclusionTableView.getItems()){
+                if(item.getValue().equals(valueField.getText())){
+                    showAlert(Alert.AlertType.ERROR, String.format("Value %s is already exist.", valueField.getText()));
+                    return;
+                }
+            }
+
+            inclusionTableView.getItems().add(new Inclusion(keywordField.getText(), valueField.getText()));
+        });
 
         closeButton.setOnAction(value -> ((Stage)((Node)value.getSource()).getScene().getWindow()).close());
 
         // it's better not to close this window because.. if you want to add multiple variables?
         keywordField.setEditable(false);
         container.setPadding(new Insets(10));
-        container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Value"), optionValueField,
+        container.getChildren().addAll(new Label("Keyword"), keywordField, new Label("Value"), valueField,
                 new HBox(10, addButton, closeButton));
         stage.setScene(new Scene(container));
         stage.initOwner(((Button)event.getSource()).getScene().getWindow());
@@ -1133,6 +1400,7 @@ public class SnortController implements Initializable {
     @FXML
     private void onClickResetInclusionButton(){
         inclusionTableView.getItems().clear();
+        if(parsedInclusions == null) return;
         parsedInclusions.forEach(inclusion -> inclusionTableView.getItems().add(inclusion.copy()));
     }
     @FXML

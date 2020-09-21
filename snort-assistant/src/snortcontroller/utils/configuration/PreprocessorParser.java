@@ -43,7 +43,7 @@ public class PreprocessorParser {
                     }
                 }
             } else if(endsWithBackslash) {
-                String strippedLine = line.strip();
+                String strippedLine = line.stripTrailing();
                 valueStrings.append(strippedLine);
                 if(!strippedLine.endsWith("\\")) {
                     endsWithBackslash = false;
