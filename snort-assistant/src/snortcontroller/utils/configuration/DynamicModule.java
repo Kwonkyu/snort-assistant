@@ -38,6 +38,15 @@ public class DynamicModule {
     public DynamicModule copy(){
         return new DynamicModule(moduleType, valueType, value);
     }
+
+    @Override
+    public String toString() {
+        return "DynamicModule{" +
+                "moduleType='" + moduleType + '\'' +
+                ", valueType='" + valueType + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
 }
 
 // check http://books.gigatux.nl/mirror/snortids/0596006616/snortids-CHP-5-SECT-2.html

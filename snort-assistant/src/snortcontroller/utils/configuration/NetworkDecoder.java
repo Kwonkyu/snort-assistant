@@ -38,4 +38,13 @@ public class NetworkDecoder {
     public NetworkDecoder copy(){
         return new NetworkDecoder(keyword, name, value);
     }
+
+    @Override
+    public String toString() {
+        return "NetworkDecoder{" +
+                "keyword='" + keyword + '\'' +
+                ", name='" + name + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
 }

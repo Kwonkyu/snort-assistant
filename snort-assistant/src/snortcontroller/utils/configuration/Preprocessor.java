@@ -38,4 +38,13 @@ public class Preprocessor {
     public Preprocessor copy(){
         return new Preprocessor(keyword, option, value);
     }
+
+    @Override
+    public String toString() {
+        return "Preprocessor{" +
+                "keyword='" + keyword + '\'' +
+                ", option='" + option + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
 }

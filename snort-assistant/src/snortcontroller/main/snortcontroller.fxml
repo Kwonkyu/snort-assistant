@@ -6,10 +6,12 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToolBar?>
@@ -174,7 +176,7 @@
                   </ToolBar>
                </top>
                <center>
-                  <Accordion BorderPane.alignment="CENTER">
+                  <Accordion>
                     <panes>
                       <TitledPane text="Network Variables">
                            <content>
@@ -240,7 +242,8 @@
                                     <Insets bottom="-1.0" left="-1.0" right="-1.0" top="-1.0" />
                                  </padding>
                               </BorderPane>
-                           </content></TitledPane>
+                           </content>
+                        </TitledPane>
                         <TitledPane layoutX="10.0" layoutY="36.0" text="Dynamic Modules">
                            <content>
                               <BorderPane>
@@ -374,7 +377,14 @@
                         </TitledPane>
                     </panes>
                   </Accordion>
-               </center></BorderPane>
+               </center>
+               <bottom>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
+                     <content>
+                        <TextArea fx:id="selectedItemInformationTextArea" editable="false" prefHeight="200.0" />
+                     </content>
+                  </ScrollPane>
+               </bottom></BorderPane>
          </Tab>
       </TabPane>
    </center>

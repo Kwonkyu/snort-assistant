@@ -36,4 +36,13 @@ public class OutputModule {
     public OutputModule copy(){
         return new OutputModule(keyword, option, value);
     }
+
+    @Override
+    public String toString() {
+        return "OutputModule{" +
+                "keyword='" + keyword + '\'' +
+                ", option='" + option + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
 }

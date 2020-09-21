@@ -4,8 +4,6 @@ import javafx.application.Platform;
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.SimpleMapProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -89,6 +87,9 @@ public class SnortController implements Initializable {
     @FXML TextField snortConfigurationFileLocationTextField;
     @FXML Button findConfigurationFileButton;
     @FXML Button openConfigurationFileButton;
+
+    // bottom elements
+    @FXML TextArea selectedItemInformationTextArea;
 
     // network variables tableview elements
     @FXML TableView<NetworkVariable> networkVariablesTableView;
@@ -410,6 +411,14 @@ public class SnortController implements Initializable {
         networkVariablesRemoveMenuItem.setOnAction(event -> networkVariablesTableView.getItems().remove(networkVariablesTableView.getSelectionModel().getSelectedItem()));
         networkVariablesTableView.setContextMenu(new ContextMenu(networkVariablesEditMenuItem, networkVariablesRemoveMenuItem));
 
+        networkVariablesTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String info = "Network Variables.\n\n" +
+                    String.format("Variable Type: %s\n", newValue.getType()) +
+                    String.format("Variable Name: %s\n", newValue.getName()) +
+                    String.format("Variable Value: %s\n", newValue.getValue());
+            selectedItemInformationTextArea.setText(info);
+        });
+
         networkVariableTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
         networkVariableNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         networkVariableValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
@@ -448,6 +457,14 @@ public class SnortController implements Initializable {
         });
         networkDecodersRemoveMenuItem.setOnAction(event -> networkDecodersTableView.getItems().remove(networkDecodersTableView.getSelectionModel().getSelectedItem()));
         networkDecodersTableView.setContextMenu(new ContextMenu(networkDecodersEditMenuItem, networkDecodersRemoveMenuItem));
+
+        networkDecodersTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String info = "Network Decoders.\n\n" +
+                    String.format("Decoder Keyword: %s\n", newValue.getKeyword()) +
+                    String.format("Decoder Name: %s\n", newValue.getName()) +
+                    String.format("Decoder Value: %s\n", newValue.getValue());
+            selectedItemInformationTextArea.setText(info);
+        });
 
         networkDecoderKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         networkDecoderNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -489,6 +506,14 @@ public class SnortController implements Initializable {
         dynamicModulesRemoveMenuItem.setOnAction(event -> dynamicModulesTableView.getItems().remove(dynamicModulesTableView.getSelectionModel().getSelectedItem()));
         dynamicModulesTableView.setContextMenu(new ContextMenu(dynamicModulesEditMenuItem, dynamicModulesRemoveMenuItem));
 
+        dynamicModulesTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String info = "Dynamic Modules.\n\n" +
+                    String.format("Module Type: %s\n", newValue.getModuleType()) +
+                    String.format("Value Type: %s\n", newValue.getValueType()) +
+                    String.format("Module Values: %s\n", newValue.getValue());
+            selectedItemInformationTextArea.setText(info);
+        });
+
         dynamicModuleTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("moduleType"));
         dynamicModuleValueTypeTableColumn.setCellValueFactory(new PropertyValueFactory<>("valueType"));
         dynamicModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
@@ -527,6 +552,14 @@ public class SnortController implements Initializable {
         });
         preprocessorsRemoveMenuItem.setOnAction(event -> preprocessorTableView.getItems().remove(preprocessorTableView.getSelectionModel().getSelectedItem()));
         preprocessorTableView.setContextMenu(new ContextMenu(preprocessorsEditMenuItem, preprocessorsRemoveMenuItem));
+
+        preprocessorTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String info = "Preprocessors.\n\n" +
+                    String.format("Preprocessor Keyword: %s\n", newValue.getKeyword()) +
+                    String.format("Preprocessor Option: %s\n", newValue.getOption()) +
+                    String.format("Preprocessor Option Values: %s\n", newValue.getValue());
+            selectedItemInformationTextArea.setText(info);
+        });
 
         preprocessorKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         preprocessorOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
@@ -567,6 +600,14 @@ public class SnortController implements Initializable {
         outputModulesRemoveMenuItem.setOnAction(event -> outputModuleTableView.getItems().remove(outputModuleTableView.getSelectionModel().getSelectedItem()));
         outputModuleTableView.setContextMenu(new ContextMenu(outputModulesEditMenuItem, outputModulesRemoveMenuItem));
 
+        outputModuleTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String info = "Output Modules.\n\n" +
+                    String.format("Module Keyword: %s\n", newValue.getKeyword()) +
+                    String.format("Module Option: %s\n", newValue.getOption()) +
+                    String.format("Module Values: %s\n", newValue.getValue());
+            selectedItemInformationTextArea.setText(info);
+        });
+
         outputModuleKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         outputModuleOptionTableColumn.setCellValueFactory(new PropertyValueFactory<>("option"));
         outputModuleValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
@@ -604,11 +645,15 @@ public class SnortController implements Initializable {
         inclusionsRemoveMenuItem.setOnAction(event -> inclusionTableView.getItems().remove(inclusionTableView.getSelectionModel().getSelectedItem()));
         inclusionTableView.setContextMenu(new ContextMenu(inclusionsEditMenuItem, inclusionsRemoveMenuItem));
 
+        inclusionTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            String info = "File Inclusions.\n\n" +
+                    String.format("Inclusion Keyword: %s\n", newValue.getKeyword()) +
+                    String.format("Inclusion Value: %s\n", newValue.getValue());
+            selectedItemInformationTextArea.setText(info);
+        });
+
         inclusionKeywordTableColumn.setCellValueFactory(new PropertyValueFactory<>("keyword"));
         inclusionValueTableColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
-
-        inclusionKeywordTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        inclusionValueTableColumn.setCellFactory(TextFieldTableCell.forTableColumn());
     }
 
     // run command button handlers

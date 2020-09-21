@@ -37,13 +37,16 @@ public class NetworkVariable {
         this.value = value;
     }
 
-    @Override
-    public String toString() {
-        // return super.toString();
-        return String.format("[%s:%s %s]\n", name, type, value);
-    }
-
     public NetworkVariable copy(){
         return new NetworkVariable(type, name, value);
+    }
+
+    @Override
+    public String toString() {
+        return "NetworkVariable{" +
+                "type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", value='" + value + '\'' +
+                '}';
     }
 }
