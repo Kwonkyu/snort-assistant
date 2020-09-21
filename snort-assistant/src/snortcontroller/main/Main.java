@@ -2,28 +2,50 @@ package snortcontroller.main;
 	
 import javafx.application.Application;
 import javafx.stage.Stage;
-import net.sourceforge.jpcap.capture.CaptureFileOpenException;
-import net.sourceforge.jpcap.capture.CapturePacketException;
-import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.fxml.FXMLLoader;
+import snortcontroller.utils.ScheduledExecutorSingleton;
+import snortcontroller.test.Test;
+import snortcontroller.utils.SingleThreadExecutorSingleton;
+
+import java.util.concurrent.TimeUnit;
 
 
 public class Main extends Application {
+	private static Test test = new Test();
+
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			HBox rootContainer = new HBox();
-			rootContainer.setPrefSize(800, 300);
-			Node mainElement = FXMLLoader.load(getClass().getResource("maincontroller.fxml"));
-			Node subElement = FXMLLoader.load(getClass().getResource("subcontroller.fxml"));
-			rootContainer.getChildren().addAll(mainElement, subElement);
-			
-			Scene scene = new Scene(rootContainer);
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("maincontroller.fxml"));
+			HBox main = loader.load();
+			MainController mainController = loader.getController();
+
+			Scene scene = new Scene(main);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
+			primaryStage.setOnCloseRequest(event -> {
+				var serviceSingle = SingleThreadExecutorSingleton.getService();
+				var serviceScheduled = ScheduledExecutorSingleton.getService();
+				serviceSingle.shutdown();
+				serviceScheduled.shutdown();
+				try {
+					serviceSingle.awaitTermination(10, TimeUnit.SECONDS);
+					serviceSingle.shutdownNow();
+					serviceScheduled.awaitTermination(10, TimeUnit.SECONDS);
+					serviceScheduled.shutdownNow();
+					if(mainController.snortProcess.isPresent()){
+						Process snort = mainController.snortProcess.get();
+						while(snort.isAlive()){
+							snort.destroy();
+						}
+					}
+				} catch (InterruptedException e) {
+					System.err.println("Service shutdown interrupted.");
+					e.printStackTrace();
+				}
+			});
 			primaryStage.show();
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -31,18 +53,7 @@ public class Main extends Application {
 	}
 	
 	public static void main(String[] args) {
-		PcapParser parse = new PcapParser("/home/kwonkyu/Documents/snortlog");
-		try {
-			parse.parse();
-		} catch (CaptureFileOpenException e) {
-			// TODO Auto-generated catch block
-			System.err.println("Could not open pcap file.");
-		} catch (CapturePacketException e) {
-			System.err.println("Could not capture packets.");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		test.test();
 		launch(args);
 	}
 }

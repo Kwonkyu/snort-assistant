@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.SnortController">
+   <center>
+      <TabPane>
+         <Tab closable="false" text="Run Command">
+            <BorderPane>
+               <top>
+                  <ToolBar fx:id="runCommandToolbar" BorderPane.alignment="CENTER">
+                    <items>
+                        <Label text="Generated run command" />
+                        <TextField fx:id="generatedCommandTextField" prefWidth="350.0" promptText="snort [options] ..." text="snort" />
+                        <Button fx:id="runButton" mnemonicParsing="false" text="Run" />
+                        <Button fx:id="saveButton" layoutX="532.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickSaveCommandButton" text="Save" />
+                        <Button fx:id="loadButton" layoutX="580.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickLoadCommandButton" text="Load" />
+                    </items>
+                  </ToolBar>
+               </top>
+               <center>
+                  <Accordion prefHeight="600.0">
+                    <panes>
+                      <TitledPane text="Sniffer mode">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <Button fx:id="snifferModeHelpButton" mnemonicParsing="false" text="What is 'Sniffer' mode?" />
+                                    <HBox>
+                                       <children>
+                                          <CheckBox fx:id="verboseCheckBox" mnemonicParsing="false" text="Verbose(-v)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox layoutX="20.0" layoutY="66.0">
+                                       <children>
+                                          <CheckBox fx:id="arpCheckBox" mnemonicParsing="false" text="Display ARP packet(-a)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <CheckBox fx:id="dumpApplicationLayerCheckBox" mnemonicParsing="false" text="Dump application layer(-d)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <CheckBox fx:id="ethernetLayerCheckBox" mnemonicParsing="false" text="Display the second layer info(-e)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <Button fx:id="snifferModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                      <TitledPane text="Packet Logger mode">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <Button fx:id="packetLoggerModeHelpButton" mnemonicParsing="false" text="What is 'Packet Logger' mode?" />
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="logToDirectoryCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Log to directory(-l)" />
+                                          <TextField fx:id="logToDirectoryTextField" prefWidth="300.0" promptText="/directory/to/logs" />
+                                          <Button fx:id="logToDirectoryFindButton" mnemonicParsing="false" text="Find" />
+                                          <Button fx:id="logToDirectoryApplyButton" layoutX="630.0" layoutY="10.0" mnemonicParsing="false" text="Apply" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="66.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="homeAddressCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Home address(-h)" />
+                                          <TextField fx:id="homeAddressTextField" prefWidth="300.0" promptText="192.168.1.0/24" />
+                                          <Button fx:id="homeAddressApplyButton" mnemonicParsing="false" text="Apply" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="112.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="tcpdumpFormatCheckBox" mnemonicParsing="false" text="Log packets in tcpdump format/binary mode(-b)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <Button fx:id="packetLoggerModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                        <TitledPane layoutX="10.0" layoutY="36.0" text="NIDS mode">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <Button fx:id="NIDSModeHelpButton" mnemonicParsing="false" text="What is 'NIDS' mode?" />
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="configurationFileCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Configuration file location(-c)" />
+                                          <TextField fx:id="configurationFileLocationTextField" prefWidth="250.0" />
+                                          <Button fx:id="configurationFileFindButton" mnemonicParsing="false" text="Find" />
+                                          <Button fx:id="configurationFileApplyButton" mnemonicParsing="false" text="Apply" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="66.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="alertModeCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Alert mode(-A)" />
+                                          <ChoiceBox fx:id="alertModeChoiceBox" prefWidth="250.0" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="112.0" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="sendAlertToSyslogCheckBox" mnemonicParsing="false" text="Send alert to syslog(-s)" />
+                                       </children>
+                                    </HBox>
+                                    <HBox>
+                                       <children>
+                                          <Button fx:id="NIDSModeResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                        <TitledPane text="etc">
+                           <content>
+                              <VBox spacing="20.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <CheckBox fx:id="interfaceCheckBox" mnemonicParsing="false" prefWidth="300.0" text="Listen on interface(-i)" />
+                                          <ChoiceBox fx:id="interfaceChoiceBox" prefWidth="250.0" />
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="20.0" spacing="10.0">
+                                       <children>
+                                          <Button fx:id="etcResetButton" mnemonicParsing="false" text="Reset" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
+                    </panes>
+                  </Accordion>
+               </center></BorderPane>
+         </Tab>
+         <Tab closable="false" text="General Configurations">
+            <BorderPane>
+               <top>
+                  <ToolBar fx:id="generalConfigurationsToolBar" BorderPane.alignment="CENTER">
+                    <items>
+                        <Label text="Snort configuration file" />
+                        <TextField fx:id="snortConfigurationFileLocationTextField" prefWidth="300.0" promptText="location of snort.conf" text="/etc/snort/snort.conf" />
+                      <Button fx:id="findConfigurationFileButton" mnemonicParsing="false" onAction="#onClickFindConfigurationFileButton" text="Find" />
+                        <Button fx:id="openConfigurationFileButton" layoutX="314.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickOpenConfigurationFileButton" text="Open" />
+                        <Button mnemonicParsing="false" onAction="#onClickSaveConfigurationFileButton" text="Save" />
+                    </items>
+                  </ToolBar>
+               </top>
+               <center>
+                  <Accordion>
+                    <panes>
+                      <TitledPane text="Network Variables">
+                           <content>
+                              <BorderPane>
+                                 <center>
+                                    <TableView fx:id="networkVariablesTableView" editable="true">
+                                       <columns>
+                                          <TableColumn fx:id="networkVariableTypeTableColumn" maxWidth="150.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableTypeColumn" prefWidth="100.0" text="Type" />
+                                          <TableColumn fx:id="networkVariableNameTableColumn" maxWidth="500.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkVariableNameColumn" prefWidth="300.0" text="Name" />
+                                          <TableColumn fx:id="networkVariableValueTableColumn" minWidth="150.0" onEditCommit="#onEditCommitNetworkVariableValueColumn" prefWidth="350.0" text="Value" />
+                                       </columns>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                    </TableView>
+                                 </center>
+                                 <top>
+                                    <ToolBar BorderPane.alignment="CENTER">
+                                      <items>
+                                          <Button fx:id="networkVariablesAddButton" mnemonicParsing="false" onAction="#onClickAddNetworkVariablesButton" text="Add" />
+                                        <Button fx:id="networkVariablesResetButton" mnemonicParsing="false" onAction="#onClickResetNetworkVariablesButton" text="Reset" />
+                                        <Button fx:id="networkVariablesHelpButton" mnemonicParsing="false" onAction="#onClickHelpNetworkVariablesButton" text="Help" />
+                                      </items>
+                                    </ToolBar>
+                                 </top>
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                                 <padding>
+                                    <Insets top="1.0" />
+                                 </padding>
+                              </BorderPane>
+                           </content>
+                        </TitledPane>
+                      <TitledPane text="Network Decoder">
+                           <content>
+                              <BorderPane>
+                                 <top>
+                                    <ToolBar BorderPane.alignment="CENTER">
+                                      <items>
+                                        <Button fx:id="networkDecodersAddButton" mnemonicParsing="false" onAction="#onClickAddNetworkDecodersButton" text="Add" />
+                                          <Button fx:id="networkDecodersResetButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickResetNetworkDecodersButton" text="Reset" />
+                                          <Button fx:id="networkDecodersHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpNetworkDecodersButton" text="Help" />
+                                      </items>
+                                    </ToolBar>
+                                 </top>
+                                 <center>
+                                    <TableView fx:id="networkDecodersTableView" editable="true" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets />
+                                       </BorderPane.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="networkDecoderKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="networkDecoderNameTableColumn" maxWidth="500.0" minWidth="200.0" onEditCommit="#onEditCommitNetworkDecoderNameColumn" prefWidth="300.0" text="Name" />
+                                          <TableColumn fx:id="networkDecoderValueTableColumn" minWidth="100.0" onEditCommit="#onEditCommitNetworkDecoderValueColumn" prefWidth="250.0" text="Value" />
+                                       </columns>
+                                    </TableView>
+                                 </center>
+                                 <padding>
+                                    <Insets bottom="-1.0" left="-1.0" right="-1.0" top="-1.0" />
+                                 </padding>
+                              </BorderPane>
+                           </content>
+                        </TitledPane>
+                        <TitledPane layoutX="10.0" layoutY="36.0" text="Dynamic Modules">
+                           <content>
+                              <BorderPane>
+                                 <top>
+                                    <ToolBar BorderPane.alignment="CENTER">
+                                       <items>
+                                          <Button fx:id="dynamicModulesAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddDynamicModulesButton" text="Add" />
+                                          <Button fx:id="dynamicModulesResetButton" mnemonicParsing="false" onAction="#onClickResetDynamicModulesButton" text="Reset" />
+                                          <Button fx:id="dynamicModulesHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpDynamicModulesButton" text="Help" />
+                                       </items>
+                                    </ToolBar>
+                                 </top>
+                                 <center>
+                                    <TableView fx:id="dynamicModulesTableView" editable="true" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets />
+                                       </BorderPane.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="dynamicModuleTypeTableColumn" maxWidth="300.0" minWidth="150.0" onEditCommit="#onEditCommitDynamicModuleTypeColumn" prefWidth="200.0" text="Module Type" />
+                                          <TableColumn fx:id="dynamicModuleValueTypeTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueTypeColumn" prefWidth="200.0" text="Value Type" />
+                                          <TableColumn fx:id="dynamicModuleValueTableColumn" minWidth="100.0" onEditCommit="#onEditCommitDynamicModuleValueColumn" prefWidth="200.0" text="Value" />
+                                       </columns>
+                                    </TableView>
+                                 </center>
+                                 <padding>
+                                    <Insets bottom="-1.0" left="-1.0" right="-1.0" top="-1.0" />
+                                 </padding>
+                              </BorderPane>
+                           </content>
+                        </TitledPane>
+                        <TitledPane layoutX="10.0" layoutY="584.0" text="Preprocessors">
+                           <content>
+                              <BorderPane>
+                                 <top>
+                                    <ToolBar BorderPane.alignment="CENTER">
+                                       <items>
+                                          <Button fx:id="preprocessorAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddPreprocessorsButton" text="Add" />
+                                          <Button fx:id="preprocessorResetButton" mnemonicParsing="false" onAction="#onClickResetPreprocessorsButton" text="Reset" />
+                                          <Button fx:id="preprocessorHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpPreprocessorsButton" text="Help" />
+                                       </items>
+                                    </ToolBar>
+                                 </top>
+                                 <center>
+                                    <TableView fx:id="preprocessorTableView" editable="true" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets />
+                                       </BorderPane.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="preprocessorKeywordTableColumn" maxWidth="300.0" minWidth="150.0" onEditCommit="#onEditCommitPreprocessorKeywordColumn" prefWidth="200.0" text="Keyword" />
+                                          <TableColumn fx:id="preprocessorOptionTableColumn" maxWidth="250.0" minWidth="150.0" onEditCommit="#onEditCommitPreprocessorOptionColumn" prefWidth="200.0" text="Option" />
+                                          <TableColumn fx:id="preprocessorValueTableColumn" minWidth="100.0" onEditCommit="#onEditCommitPreprocessorValueColumn" prefWidth="250.0" text="Value" />
+                                       </columns>
+                                    </TableView>
+                                 </center>
+                                 <padding>
+                                    <Insets bottom="-1.0" left="-1.0" right="-1.0" top="-1.0" />
+                                 </padding>
+                              </BorderPane>
+                           </content>
+                        </TitledPane>
+                        <TitledPane layoutX="10.0" layoutY="584.0" text="Output Modules">
+                           <content>
+                              <BorderPane>
+                                 <top>
+                                    <ToolBar BorderPane.alignment="CENTER">
+                                       <items>
+                                          <Button fx:id="outputModuleAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddOutputModulesButton" text="Add" />
+                                          <Button fx:id="outputModuleResetButton" mnemonicParsing="false" onAction="#onClickResetOutputModulesButton" text="Reset" />
+                                          <Button fx:id="outputModuleHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpOutputModulesButton" text="Help" />
+                                       </items>
+                                    </ToolBar>
+                                 </top>
+                                 <center>
+                                    <TableView fx:id="outputModuleTableView" editable="true" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets />
+                                       </BorderPane.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                       <columns>
+                                          <TableColumn fx:id="outputModuleKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitOutputModuleKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="outputModuleOptionTableColumn" maxWidth="300.0" minWidth="200.0" onEditCommit="#onEditCommitOutputModuleOptionColumn" prefWidth="250.0" text="Option" />
+                                          <TableColumn fx:id="outputModuleValueTableColumn" minWidth="300.0" onEditCommit="#onEditCommitOutputModuleValueColumn" prefWidth="500.0" text="Value" />
+                                       </columns>
+                                    </TableView>
+                                 </center>
+                                 <padding>
+                                    <Insets bottom="-1.0" left="-1.0" right="-1.0" top="-1.0" />
+                                 </padding>
+                              </BorderPane>
+                           </content>
+                        </TitledPane>
+                        <TitledPane layoutX="10.0" layoutY="114.0" text="include">
+                           <content>
+                              <BorderPane>
+                                 <top>
+                                    <ToolBar BorderPane.alignment="CENTER">
+                                       <items>
+                                          <Button fx:id="inclusionAddButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onClickAddInclusionButton" text="Add" />
+                                          <Button fx:id="inclusionResetButton" mnemonicParsing="false" onAction="#onClickResetInclusionButton" text="Reset" />
+                                          <Button fx:id="inclusionHelpButton" layoutX="10.0" layoutY="11.0" mnemonicParsing="false" onAction="#onClickHelpInclusionButton" text="Help" />
+                                       </items>
+                                    </ToolBar>
+                                 </top>
+                                 <center>
+                                    <TableView fx:id="inclusionTableView" editable="true" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets />
+                                       </BorderPane.margin>
+                                       <columns>
+                                          <TableColumn fx:id="inclusionKeywordTableColumn" maxWidth="200.0" minWidth="100.0" onEditCommit="#onEditCommitInclusionKeywordColumn" prefWidth="150.0" text="Keyword" />
+                                          <TableColumn fx:id="inclusionValueTableColumn" minWidth="300.0" onEditCommit="#onEditCommitInclusionValueColumn" prefWidth="-1.0" text="Value" />
+                                       </columns>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                    </TableView>
+                                 </center>
+                                 <padding>
+                                    <Insets bottom="-1.0" left="-1.0" right="-1.0" top="-1.0" />
+                                 </padding>
+                              </BorderPane>
+                           </content>
+                        </TitledPane>
+                    </panes>
+                  </Accordion>
+               </center>
+               <bottom>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" BorderPane.alignment="CENTER">
+                     <content>
+                        <TextArea fx:id="selectedItemInformationTextArea" editable="false" prefHeight="200.0" />
+                     </content>
+                  </ScrollPane>
+               </bottom></BorderPane>
+         </Tab>
+      </TabPane>
+   </center>
+</BorderPane>

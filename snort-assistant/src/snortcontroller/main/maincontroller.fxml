@@ -1,11 +1,229 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-
-<AnchorPane prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.MainController">
+<HBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.MainController">
    <children>
-      <Button layoutX="169.0" layoutY="187.0" mnemonicParsing="false" text="Button" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="30.0" />
+      <VBox alignment="TOP_CENTER" minWidth="220.0" spacing="10.0" style="-fx-background-color: #FF8400;" styleClass="side-menu">
+         <children>
+            <VBox alignment="TOP_CENTER" spacing="10.0">
+               <children>
+                  <HBox alignment="TOP_CENTER" style="-fx-background-radius: 5; -fx-background-color: #e6f6e6; -fx-border-radius: 5; -fx-border-color: black;">
+                     <children>
+                        <Label text="Menu">
+                           <font>
+                              <Font name="System Bold" size="24.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </HBox>
+                  <Separator />
+                  <Button fx:id="pcapParserButton" mnemonicParsing="false" onAction="#drawActivity" prefHeight="100.0" prefWidth="150.0" style="-fx-background-radius: 10;" styleClass="menu-button">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <graphic>
+                        <VBox alignment="CENTER">
+                           <children>
+                              <ImageView fitHeight="60.0" fitWidth="60.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../rsc/log.png" />
+                                 </image>
+                              </ImageView>
+                              <Label text="Pcap Parser">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </VBox>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="ruleParserButton" mnemonicParsing="false" onAction="#drawActivity" prefHeight="100.0" prefWidth="150.0" style="-fx-background-radius: 10;" styleClass="menu-button">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <graphic>
+                        <VBox alignment="CENTER">
+                           <children>
+                              <ImageView fitHeight="60.0" fitWidth="60.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../rsc/rules.png" />
+                                 </image>
+                              </ImageView>
+                              <Label text="Rule Parser">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </VBox>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="snortSettingButton" mnemonicParsing="false" onAction="#drawActivity" prefHeight="100.0" prefWidth="150.0" style="-fx-background-radius: 10;" styleClass="menu-button">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                     <graphic>
+                        <VBox alignment="CENTER">
+                           <children>
+                              <ImageView fitHeight="60.0" fitWidth="60.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../rsc/settings.png" />
+                                 </image>
+                              </ImageView>
+                              <Label text="Snort Settings">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </VBox>
+                     </graphic>
+                  </Button>
+               </children>
+            </VBox>
+            <Separator layoutX="10.0" layoutY="50.0" />
+            <VBox spacing="10.0">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <children>
+                  <HBox alignment="TOP_CENTER" style="-fx-background-color: #e6f6e6; -fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: black;">
+                     <children>
+                        <Label text="Snort Status">
+                           <font>
+                              <Font name="System Bold" size="24.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </HBox>
+                  <HBox alignment="TOP_CENTER" spacing="10.0" style="-fx-background-color: FFB24D; -fx-background-radius: 20;">
+                     <children>
+                        <Label text="Snort is...">
+                           <font>
+                              <Font size="15.0" />
+                           </font></Label>
+                        <Label fx:id="statusLabel" layoutX="10.0" layoutY="10.0" text="Stopped" underline="true">
+                           <font>
+                              <Font name="System Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+                  <HBox alignment="TOP_CENTER" layoutX="10.0" layoutY="62.0" spacing="10.0" style="-fx-background-color: FFB24D; -fx-background-radius: 20;">
+                     <children>
+                        <Label text="PID:">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="pidLabel" layoutX="10.0" layoutY="10.0" maxWidth="110.0" text="-" underline="true">
+                           <font>
+                              <Font name="System Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+                  <HBox fx:id="statusButtonContainer" layoutX="10.0" layoutY="60.0" style="-fx-background-color: FFB24D; -fx-background-radius: 20;">
+                     <children>
+                        <Button fx:id="statusButton" mnemonicParsing="false" onAction="#onStatusButtonClicked" style="-fx-background-radius: 20; -fx-pref-width: 100;" text="STOPPED">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                           <HBox.margin>
+                              <Insets bottom="-10.0" left="-10.0" right="-10.0" top="-10.0" />
+                           </HBox.margin>
+                        </Button>
+                     </children>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
+            <Separator layoutX="20.0" layoutY="415.0" />
+            <VBox spacing="10.0">
+               <children>
+                  <HBox alignment="TOP_CENTER" style="-fx-background-color: #e6f6e6; -fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: black;">
+                     <children>
+                        <Label text="User Status">
+                           <font>
+                              <Font name="System Bold" size="24.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </HBox>
+                  <HBox alignment="TOP_CENTER" spacing="10.0" style="-fx-background-color: FFB24D; -fx-background-radius: 20;">
+                     <children>
+                        <Label text="You are...">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="rootPrivilegeLabel" layoutX="10.0" layoutY="10.0" text="not root" underline="true">
+                           <font>
+                              <Font name="System Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+         <HBox.margin>
+            <Insets />
+         </HBox.margin>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+      <AnchorPane prefHeight="900.0" prefWidth="900.0" style="-fx-background-color: #e8ceb3;" HBox.hgrow="SOMETIMES">
+         <children>
+            <BorderPane fx:id="activityFrame" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <top>
+                  <Label fx:id="activityLabel" text="Select Menu" BorderPane.alignment="CENTER_LEFT">
+                     <font>
+                        <Font size="25.0" />
+                     </font>
+                     <BorderPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </BorderPane.margin>
+                  </Label>
+               </top>
+            </BorderPane>
+         </children>
+      </AnchorPane>
    </children>
-</AnchorPane>
+</HBox>

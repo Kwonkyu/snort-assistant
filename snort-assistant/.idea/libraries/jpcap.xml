@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="jpcap">
+    <CLASSES>
+      <root url="jar:///usr/lib/jvm/jpcap-0.01.16/jars/net.sourceforge.jpcap.jar!/" />
+      <root url="file:///usr/lib/jvm/jpcap-0.01.16/thirdParty/jars" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar:///usr/lib/jvm/jpcap-0.01.16/jars/javadoc_net.sourceforge.jpcap-0.01.16.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar:///usr/lib/jvm/jpcap-0.01.16/jars/net.sourceforge.jpcap.jar!/" />
+    </SOURCES>
+    <jarDirectory url="file:///usr/lib/jvm/jpcap-0.01.16/thirdParty/jars" recursive="false" />
+  </library>
+</component>
