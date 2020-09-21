@@ -155,6 +155,8 @@ public class PcapParserController implements Initializable {
 
         // 'Find' button to open file chooser window.
         fileChooser.getExtensionFilters().addAll(pcapFilter, anyFilter);
+        File logDir = new File("/var/log/snort");
+        if(logDir.exists()) fileChooser.setInitialDirectory(logDir);
 
         // Context menu for right click on table cell
         cellContextMenu = new ContextMenu();

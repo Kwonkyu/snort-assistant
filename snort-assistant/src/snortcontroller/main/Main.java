@@ -18,7 +18,9 @@ public class Main extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			HBox main = FXMLLoader.load(getClass().getResource("maincontroller.fxml"));
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("maincontroller.fxml"));
+			HBox main = loader.load();
+			MainController mainController = loader.getController();
 
 			Scene scene = new Scene(main);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
@@ -33,6 +35,12 @@ public class Main extends Application {
 					serviceSingle.shutdownNow();
 					serviceScheduled.awaitTermination(10, TimeUnit.SECONDS);
 					serviceScheduled.shutdownNow();
+					if(mainController.snortProcess.isPresent()){
+						Process snort = mainController.snortProcess.get();
+						while(snort.isAlive()){
+							snort.destroy();
+						}
+					}
 				} catch (InterruptedException e) {
 					System.err.println("Service shutdown interrupted.");
 					e.printStackTrace();

@@ -14,7 +14,7 @@
 
 <HBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="snortcontroller.main.MainController">
    <children>
-      <VBox alignment="TOP_CENTER" minWidth="200.0" spacing="10.0" style="-fx-background-color: #FF8400;" styleClass="side-menu">
+      <VBox alignment="TOP_CENTER" minWidth="220.0" spacing="10.0" style="-fx-background-color: #FF8400;" styleClass="side-menu">
          <children>
             <VBox alignment="TOP_CENTER" spacing="10.0">
                <children>

@@ -16,6 +16,11 @@
       <element id="extracted-dir" path="/usr/lib/jvm/javafx-sdk-11.0.2/lib/javafx.swing.jar" path-in-jar="/" />
       <element id="extracted-dir" path="/usr/lib/jvm/javafx-sdk-11.0.2/lib/javafx.controls.jar" path-in-jar="/" />
       <element id="extracted-dir" path="/usr/lib/jvm/javafx-sdk-11.0.2/lib/javafx.graphics.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/usr/lib/jvm/commons-cli-1.4/commons-cli-1.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/usr/lib/jvm/commons-cli-1.4/commons-cli-1.4-tests.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/usr/lib/jvm/commons-cli-1.4/commons-cli-1.4-javadoc.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/usr/lib/jvm/commons-cli-1.4/commons-cli-1.4-sources.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/usr/lib/jvm/commons-cli-1.4/commons-cli-1.4-test-sources.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

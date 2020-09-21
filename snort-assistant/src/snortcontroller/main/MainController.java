@@ -8,10 +8,12 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import snortcontroller.utils.ScheduledExecutorSingleton;
 import snortcontroller.utils.SingleThreadExecutorSingleton;
 
@@ -28,7 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static snortcontroller.utils.UserInteractions.*;
+import static snortcontroller.utils.UserInteractions.showAlert;
 
 
 public class MainController implements Initializable {
@@ -67,19 +69,15 @@ public class MainController implements Initializable {
 
     SnortController snortController;
 
-    protected void runSnortToggleButton(){
-
-    }
-
     private void animateToggleButton(Button b, boolean running){
         b.setDisable(true);
         buttonToggleTransition.setNode(statusButton);
         buttonToggleTransition.setFromX(statusButton.getLayoutX());
         if(running){
             buttonToggleTransition.setFromX(statusButton.getLayoutX());
-            buttonToggleTransition.setToX(statusButton.getLayoutX() + 80);
+            buttonToggleTransition.setToX(statusButton.getLayoutX() + 100);
         } else {
-            buttonToggleTransition.setFromX(statusButton.getLayoutX() + 80);
+            buttonToggleTransition.setFromX(statusButton.getLayoutX() + 100);
             buttonToggleTransition.setToX(statusButton.getLayoutX());
         }
         buttonToggleTransition.play();
@@ -224,7 +222,8 @@ public class MainController implements Initializable {
 
                 // if there is(are) running snort process(es), get PID and save it.
                 for(String element: pslist){
-                    if(element.contains("snort")){
+                    String[] infos = element.split(" ");
+                    if(infos[infos.length-1].equals("snort")){
                         snortPID.add(element.trim().split(" ")[0]);
                     }
                 }
@@ -242,7 +241,6 @@ public class MainController implements Initializable {
                         updatePIDText(snortPIDString.orElse("N/A"));
                         pidLabel.setTooltip(new Tooltip(String.format("Snort is running at %s", snortPIDString.orElse("N/A"))));
                         // if snort process is not started by this application, disable toggle button.
-                        // TODO: or just call 'pkill snort'?
                         if(snortProcess.isEmpty()){
                             statusButton.setDisable(true);
                         }

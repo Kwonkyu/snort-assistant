@@ -199,6 +199,8 @@ public class RuleParserController implements Initializable {
 
         // set filter to file chooser
         fileChooser.getExtensionFilters().addAll(ruleFilter, anyFilter);
+        File ruleDir = new File("/etc/snort/rules");
+        if(ruleDir.exists()) fileChooser.setInitialDirectory(ruleDir);
 
         // initialize table columns
         actionColumn = new TableColumn<>("Action");
