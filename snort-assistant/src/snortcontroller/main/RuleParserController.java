@@ -153,7 +153,11 @@ public class RuleParserController implements Initializable {
                             rule.getRuleDestinationAddress(), rule.getRuleDestinationPort()));
                     var bodyElementEntries = rule.getRuleBodyElements().entrySet();
                     for(var elementEntry: bodyElementEntries){
-                        writer.write(String.format("%s:%s; ", elementEntry.getKey(), elementEntry.getValue()));
+                        if(elementEntry.getValue().isBlank()){
+                            writer.write(String.format("%s; ", elementEntry.getKey()));
+                        } else {
+                            writer.write(String.format("%s:%s; ", elementEntry.getKey(), elementEntry.getValue()));
+                        }
                     }
                     writer.write(")\n");
                 }
@@ -195,10 +199,7 @@ public class RuleParserController implements Initializable {
         cellContextMenu = new ContextMenu();
         MenuItem itemAddRow = new MenuItem("Add new row");
         MenuItem itemDeleteRow = new MenuItem("Delete this row");
-        itemAddRow.setOnAction(value -> {
-            ruleTableView.getItems().add(new Rule("alert", "tcp", "$HOME_NET", "80",
-                    "->", "$EXTERNAL_NET", "any", new HashMap<>()));
-        });
+        itemAddRow.setOnAction(onClickContextMenuAdd);
         itemDeleteRow.setOnAction(onClickContextMenuDelete);
         cellContextMenu.getItems().addAll(itemAddRow, itemDeleteRow);
 
@@ -348,9 +349,10 @@ public class RuleParserController implements Initializable {
                                         }
                                     }
                                     // option name and values from buttons(which are also in hbox container) are empty.
-                                    if(optionName.isPresent() && optionName.get().length() > 0 &&
-                                        optionValue.isPresent() && optionValue.get().length() > 0){
-                                        newRuleBodyElements.put(optionName.get(), optionValue.get());
+                                    //if(optionName.isPresent() && optionName.get().length() > 0 &&
+                                    //    optionValue.isPresent() && optionValue.get().length() > 0){
+                                    if(optionName.isPresent() && optionName.get().length() > 0){
+                                        newRuleBodyElements.put(optionName.get(), optionValue.orElse(""));
                                     }
                                 });
                                 rule.setRuleBodyElements(newRuleBodyElements);
@@ -406,6 +408,19 @@ public class RuleParserController implements Initializable {
     EventHandler<TableColumn.CellEditEvent<Rule, String>> onDestinationPortCellEditCommit = event -> {
         Rule editedRule = event.getTableView().getItems().get(event.getTablePosition().getRow());
         editedRule.setRuleDestinationPort(event.getNewValue());
+    };
+
+    EventHandler<ActionEvent> onClickContextMenuAdd = new EventHandler<ActionEvent>() {
+
+        // TODO: here!
+        @Override
+        public void handle(ActionEvent event) {
+            Rule newRule = new Rule("alert", "tcp", "$HOME_NET", "80",
+                    "->", "$EXTERNAL_NET", "any", new HashMap<>());
+            editedRules.add(newRule);
+            ruleTableView.getItems().add(newRule);
+            ruleTableView.refresh();
+        }
     };
 
     EventHandler<ActionEvent> onClickContextMenuDelete = new EventHandler<>() {

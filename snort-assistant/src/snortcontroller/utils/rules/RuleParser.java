@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 public class RuleParser {
     Pattern patternRuleHeader = Pattern.compile("^[^(]+");
     Pattern patternRuleBody = Pattern.compile("[(].+[)]");
-    Pattern patternRuleBodyElements = Pattern.compile("\\w+:.+?;");
+    Pattern patternRuleBodyElements = Pattern.compile("[^ (]+?;");
     Matcher matcher = null;
 
     String fileLocation;
@@ -77,11 +77,23 @@ public class RuleParser {
                     try {
                         while (matcher.find()) {
                             String[] ruleBodyElement = matcher.group().split(":");
-                            ruleBodyElements.put(ruleBodyElement[0], ruleBodyElement[1].substring(0, ruleBodyElement[1].length()-1));
+                            if(ruleBodyElement.length > 1){
+                                ruleBodyElements.put(ruleBodyElement[0], ruleBodyElement[1].substring(0, ruleBodyElement[1].length()-1));
+                            } else {
+                                ruleBodyElements.put(ruleBodyElement[0].substring(0, ruleBodyElement[0].length()-1), "");
+                            }
                         }
                     } catch (ArrayIndexOutOfBoundsException e){
                         System.err.println("Wrong format!(Insufficient body element pair)");
                     }
+                    /*try {
+                        while (matcher.find()) {
+                            String[] ruleBodyElement = matcher.group().split(":");
+                            ruleBodyElements.put(ruleBodyElement[0], ruleBodyElement[1].substring(0, ruleBodyElement[1].length()-1));
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e){
+                        System.err.println("Wrong format!(Insufficient body element pair)");
+                    }*/
                 }
                 ruleInstance.setRuleBodyElements(ruleBodyElements);
                 parsedRules.add(ruleInstance);
