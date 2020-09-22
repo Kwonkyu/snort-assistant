@@ -193,9 +193,14 @@ public class RuleParserController implements Initializable {
 
         // initialize context menu for tableview
         cellContextMenu = new ContextMenu();
+        MenuItem itemAddRow = new MenuItem("Add new row");
         MenuItem itemDeleteRow = new MenuItem("Delete this row");
+        itemAddRow.setOnAction(value -> {
+            ruleTableView.getItems().add(new Rule("alert", "tcp", "$HOME_NET", "80",
+                    "->", "$EXTERNAL_NET", "any", new HashMap<>()));
+        });
         itemDeleteRow.setOnAction(onClickContextMenuDelete);
-        cellContextMenu.getItems().addAll(itemDeleteRow);
+        cellContextMenu.getItems().addAll(itemAddRow, itemDeleteRow);
 
         // set filter to file chooser
         fileChooser.getExtensionFilters().addAll(ruleFilter, anyFilter);
