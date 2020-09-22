@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 public class RuleParser {
     Pattern patternRuleHeader = Pattern.compile("^[^(]+");
     Pattern patternRuleBody = Pattern.compile("[(].+[)]");
-    Pattern patternRuleBodyElements = Pattern.compile("[^ (]+?;");
+    Pattern patternRuleBodyElements = Pattern.compile("[^ (].+?;");
     Matcher matcher = null;
 
     String fileLocation;
