@@ -52,7 +52,7 @@ Koreatech CSE 2020 Graduation Project.
 - [X] 정규표현식을 활용하여 파싱을 좀 더 편하게 할수도.
 - [X] 컨텍스트 메뉴에서 한 행 통째로 삭제하는 기능
 - [X] FileChooser 초기 디렉토리를 스노트 룰 디렉토리로(존재한다면)
-- [ ] 옵션이 없는 룰 옵션의 경우(nocase 같은) 정규표현식으로 파싱이 안됌
+- [X] 옵션이 없는 룰 옵션 파싱을 위해 정규표현식 수정
 - [ ] 편집 시 헤더의 action이나 direction같은 입력값이 한정된 필드는 ChoiceBox 등으로 제공.
 - [ ] 환경변수($EXTERNAL_NET)를 읽어서 출력 시 반영
 - [ ] Accordion 컨테이너로 여러 룰 파일을 읽기.

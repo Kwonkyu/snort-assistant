@@ -1,6 +1,7 @@
 package snortcontroller.utils.rules;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -106,7 +107,7 @@ public class Rule {
     public Rule copy() {
         Rule retVal = new Rule(ruleAction, ruleProtocol, ruleSourceAddress, ruleSourcePort, ruleDirection, ruleDestinationAddress,
                 ruleDestinationPort, null);
-        Map<String, String> retValBodyElements = new HashMap<>();
+        Map<String, String> retValBodyElements = new LinkedHashMap<>();
         ruleBodyElements.forEach(retValBodyElements::put);
         retVal.setRuleBodyElements(retValBodyElements);
         return retVal;

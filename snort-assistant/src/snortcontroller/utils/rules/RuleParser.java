@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -68,7 +69,7 @@ public class RuleParser {
                     return;
                 }
 
-                Map<String, String> ruleBodyElements = new HashMap<>();
+                Map<String, String> ruleBodyElements = new LinkedHashMap<>();
                 matcher = patternRuleBody.matcher(rule);
                 if(matcher.find()){
                     // if(matcher.groupCount() > 0){ don't use groupCount before find, I guess.

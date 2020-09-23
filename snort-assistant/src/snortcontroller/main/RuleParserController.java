@@ -151,14 +151,30 @@ public class RuleParserController implements Initializable {
                     writer.write(String.format("%s %s %s %s %s %s %s (", rule.getRuleAction(), rule.getRuleProtocol(),
                             rule.getRuleSourceAddress(), rule.getRuleSourcePort(), rule.getRuleDirection(),
                             rule.getRuleDestinationAddress(), rule.getRuleDestinationPort()));
-                    var bodyElementEntries = rule.getRuleBodyElements().entrySet();
+                    var bodyElementIterator = rule.getRuleBodyElements().entrySet().iterator();
+                    bodyElementIterator.forEachRemaining(elementEntry -> {
+                        if(elementEntry.getValue().isBlank()){
+                            try {
+                                writer.write(String.format("%s; ", elementEntry.getKey()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            try {
+                                writer.write(String.format("%s:%s; ", elementEntry.getKey(), elementEntry.getValue()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                    /*var bodyElementEntries = rule.getRuleBodyElements().entrySet();
                     for(var elementEntry: bodyElementEntries){
                         if(elementEntry.getValue().isBlank()){
                             writer.write(String.format("%s; ", elementEntry.getKey()));
                         } else {
                             writer.write(String.format("%s:%s; ", elementEntry.getKey(), elementEntry.getValue()));
                         }
-                    }
+                    }*/
                     writer.write(")\n");
                 }
                 writer.close();
@@ -325,7 +341,7 @@ public class RuleParserController implements Initializable {
 
                             Button saveOptionButton = new Button("Save");
                             saveOptionButton.setOnAction(value -> {
-                                Map<String, String> newRuleBodyElements = new HashMap<>();
+                                Map<String, String> newRuleBodyElements = new LinkedHashMap<>();
                                 dialogContainer.getChildren().forEach(container -> {
                                     Optional<String> optionName = Optional.empty();
                                     Optional<String> optionValue = Optional.empty();
@@ -416,7 +432,7 @@ public class RuleParserController implements Initializable {
         @Override
         public void handle(ActionEvent event) {
             Rule newRule = new Rule("alert", "tcp", "$HOME_NET", "80",
-                    "->", "$EXTERNAL_NET", "any", new HashMap<>());
+                    "->", "$EXTERNAL_NET", "any", new LinkedHashMap<>());
             editedRules.add(newRule);
             ruleTableView.getItems().add(newRule);
             ruleTableView.refresh();
